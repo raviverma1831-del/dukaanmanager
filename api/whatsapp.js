@@ -1,21 +1,53 @@
-// api/whatsapp.js
-// DukaanManager WhatsApp Bot - Twilio + Claude AI
+// api/whatsapp.js - Fixed Version v2
+import { createClient } from '@supabase/supabase-js'
 
 export default async function handler(req, res) {
+  if (req.method === 'GET') {
+    return res.status(200).json({ status: 'WhatsApp webhook is running!' })
+  }
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
   try {
-    const { Body, From, To } = req.body
+    const { Body, From } = req.body
     const userMessage = (Body || '').trim()
-    const userPhone = From // whatsapp:+91xxxxxxxxxx
-
     if (!userMessage) {
+      res.setHeader('Content-Type', 'text/xml')
       return res.status(200).send('<Response></Response>')
     }
 
-    // ── Claude AI se intelligent response lo ──────────────────
+    // ── Supabase se shop data lo ──────────────────────
+    let shopContext = 'Shop data load nahi hua.'
+    try {
+      const supabase = createClient(
+        process.env.VITE_SUPABASE_URL,
+        process.env.VITE_SUPABASE_ANON_KEY
+      )
+      const { data: shops } = await supabase.from('shops').select('*').limit(1)
+      if (shops && shops.length > 0) {
+        const shop = shops[0]
+        const { data: products } = await supabase.from('products')
+          .select('name,retail_price,stock,unit,min_stock,is_service')
+          .eq('shop_id', shop.id).order('name')
+        const { data: customers } = await supabase.from('customers')
+          .select('name,phone,balance,type').eq('shop_id', shop.id).order('name')
+        const today = new Date().toISOString().slice(0, 10)
+        const { data: sales } = await supabase.from('invoices')
+          .select('total,pay_mode').eq('shop_id', shop.id).eq('bill_date', today)
+        const cash = sales?.filter(s=>s.pay_mode==='cash').reduce((s,i)=>s+i.total,0)||0
+        const upi = sales?.filter(s=>['upi','bank'].includes(s.pay_mode)).reduce((s,i)=>s+i.total,0)||0
+        const udhar = sales?.filter(s=>s.pay_mode==='udhar').reduce((s,i)=>s+i.total,0)||0
+        const lowStock = products?.filter(p=>!p.is_service&&p.stock<=p.min_stock).map(p=>p.name)||[]
+        shopContext = `SHOP: ${shop.name} (${shop.biz_label}), Owner: ${shop.owner_name}, City: ${shop.city}
+AAJ KI SALE: Cash=₹${cash}, UPI=₹${upi}, Udhar=₹${udhar}, Total=₹${cash+upi+udhar}, Bills=${sales?.length||0}
+PRODUCTS: ${products?.slice(0,15).map(p=>`${p.name}(₹${p.retail_price},stock:${p.is_service?'svc':p.stock+p.unit})`).join(', ')||'none'}
+LOW STOCK: ${lowStock.join(', ')||'sab theek'}
+CUSTOMERS: ${customers?.slice(0,10).map(c=>`${c.name}(${c.phone||'no ph'},baaki:₹${c.balance||0})`).join(', ')||'none'}`
+      }
+    } catch (dbErr) { console.error('DB Error:', dbErr.message) }
+
+    // ── Claude AI ─────────────────────────────────────
     const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -24,64 +56,31 @@ export default async function handler(req, res) {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 600,
-        system: `Tu DukaanManager ka WhatsApp AI bot hai.
-Dukaandaar Hindi/Hinglish mein baat karta hai.
-Short aur helpful replies do.
-Samajhne wali cheezein:
-- Bill banana: "Harish ko 2kg sugar ka bill bana do"
-- Balance check: "Sunita ka balance batao"  
-- Stock check: "Sugar ka stock kitna hai"
-- Aaj ki kamai: "Aaj ki summary batao"
-- Promo: "Kal sale hai sabko msg karo"
-- Order: "Sharma ji ko order bhej do"
-
-Agar kuch samajh na aaye to politely poochho.
-Reply mein emoji use karo. Max 3-4 lines.`,
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 400,
+        system: `Tu DukaanManager WhatsApp bot hai. Hindi/Hinglish mein short jawab do (max 4 lines). Emoji use kar.\n\nDUKAAN DATA:\n${shopContext}`,
         messages: [{ role: 'user', content: userMessage }]
       })
     })
-
     const aiData = await aiRes.json()
-    const replyText = aiData.content?.[0]?.text ||
-      'Maafi chahta hoon, samajh nahi aaya. Dobara try karein 🙏'
+    console.log('AI status:', aiRes.status, 'response:', JSON.stringify(aiData).slice(0,300))
 
-    // ── Twilio WhatsApp reply bhejo ───────────────────────────
-    const accountSid = process.env.TWILIO_ACCOUNT_SID
-    const authToken = process.env.TWILIO_AUTH_TOKEN
-    const fromNumber = process.env.TWILIO_WA_NUMBER
+    let replyText = aiData?.content?.[0]?.text || `Error: ${JSON.stringify(aiData?.error)||'unknown'}`
 
-    const twilioUrl =
-      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`
-
-    const twilioRes = await fetch(twilioUrl, {
+    // ── Twilio reply ──────────────────────────────────
+    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${process.env.TWILIO_ACCOUNT_SID}/Messages.json`, {
       method: 'POST',
       headers: {
-        'Authorization':
-          'Basic ' +
-          Buffer.from(`${accountSid}:${authToken}`).toString('base64'),
+        'Authorization': 'Basic ' + Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64'),
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: new URLSearchParams({
-        From: fromNumber,
-        To: userPhone,
-        Body: replyText
-      })
+      body: new URLSearchParams({ From: process.env.TWILIO_WA_NUMBER, To: From, Body: replyText })
     })
 
-    const twilioData = await twilioRes.json()
-
-    if (!twilioRes.ok) {
-      console.error('Twilio error:', twilioData)
-    }
-
-    // Twilio ko TwiML response chahiye
     res.setHeader('Content-Type', 'text/xml')
     res.status(200).send('<Response></Response>')
-
   } catch (err) {
-    console.error('Webhook error:', err)
+    console.error('Error:', err.message)
     res.setHeader('Content-Type', 'text/xml')
     res.status(200).send('<Response></Response>')
   }
