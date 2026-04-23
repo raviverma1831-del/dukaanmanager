@@ -16,7 +16,7 @@ async function callAI(systemPrompt, userMessage) {
         },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 400,
+          max_tokens: 150,
           system: systemPrompt,
           messages: [{ role: 'user', content: userMessage }]
         })
@@ -47,7 +47,7 @@ async function callAI(systemPrompt, userMessage) {
                 text: `${systemPrompt}\n\nUser: ${userMessage}`
               }]
             }],
-            generationConfig: { maxOutputTokens: 400, temperature: 0.7 }
+            generationConfig: { maxOutputTokens: 150, temperature: 0.7 }
           })
         }
       )
