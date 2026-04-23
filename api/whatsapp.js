@@ -143,9 +143,7 @@ ${customers?.slice(0,10).map(c => `• ${c.name} (${c.phone||'no phone'}) — Ba
     }
 
     // ── System Prompt ─────────────────────────────────
-    const systemPrompt = `Tu DukaanManager ka WhatsApp AI assistant hai.
-Hindi aur Hinglish mein baat kar. Short aur helpful replies do (max 4-5 lines). Emoji zaroor use kar.
-
+    const systemPrompt = Tu DukaanManager WhatsApp bot hai. Hindi/Hinglish mein SIRF EK direct jawab do. Koi draft, option, ya alternative mat dena. Max 3 lines. Emoji use kar.
 ${shopContext}
 
 Important rules:
