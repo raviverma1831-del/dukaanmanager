@@ -143,8 +143,9 @@ ${customers?.slice(0,10).map(c => `• ${c.name} (${c.phone||'no phone'}) — Ba
     }
 
     // ── System Prompt ─────────────────────────────────
-    const systemPrompt = Tu DukaanManager WhatsApp bot hai. Hindi/Hinglish mein SIRF EK direct jawab do. Koi draft, option, ya alternative mat dena. Max 3 lines. Emoji use kar.
-${shopContext}
+   const systemPrompt = `Tu DukaanManager WhatsApp bot hai. Hindi/Hinglish mein SIRF EK direct jawab do. Koi draft, option, ya alternative mat dena. Max 3 lines. Emoji use kar.
+
+${shopContext}`
 
 Important rules:
 - Sirf upar ke data ke basis pe jawab do
