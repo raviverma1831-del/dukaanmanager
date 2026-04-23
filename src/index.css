@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Baloo 2', sans-serif;
+  background: #f0fdf4;
+  color: #1e293b;
+  -webkit-tap-highlight-color: transparent;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #16a34a; border-radius: 99px; }
+
+.card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-weight: 700;
+  font-family: 'Baloo 2', sans-serif;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn-secondary {
+  background: white;
+  color: #16a34a;
+  border: 2px solid #16a34a;
+  border-radius: 12px;
+  padding: 9px 20px;
+  font-weight: 700;
+  font-family: 'Baloo 2', sans-serif;
+  cursor: pointer;
+}
+
+.input-field {
+  width: 100%;
+  border: 1.5px solid #d1fae5;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-family: 'Baloo 2', sans-serif;
+  outline: none;
+  background: #fafffe;
+  transition: border 0.2s;
+}
+.input-field:focus { border-color: #16a34a; background: white; }
+
+.badge-green { background: #dcfce7; color: #16a34a; border-radius: 20px; padding: 3px 12px; font-size: 11px; font-weight: 700; }
+.badge-red   { background: #fee2e2; color: #dc2626; border-radius: 20px; padding: 3px 12px; font-size: 11px; font-weight: 700; }
+.badge-gold  { background: #fef9c3; color: #d97706; border-radius: 20px; padding: 3px 12px; font-size: 11px; font-weight: 700; }
+.badge-blue  { background: #dbeafe; color: #1d4ed8; border-radius: 20px; padding: 3px 12px; font-size: 11px; font-weight: 700; }
+
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.fade-in { animation: fadeIn 0.25s ease; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { animation: spin 1s linear infinite; }
