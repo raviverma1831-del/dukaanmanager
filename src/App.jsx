@@ -6,9 +6,12 @@ import Layout from './components/Layout.jsx'
 import Dashboard from './components/Dashboard.jsx'
 import Billing from './components/Billing.jsx'
 import Inventory from './components/Inventory.jsx'
+import Purchases from './components/Purchases.jsx'
 import KhataBook from './components/KhataBook.jsx'
 import Suppliers from './components/Suppliers.jsx'
 import AIChat from './components/AIChat.jsx'
+import Reports from './components/Reports.jsx'
+import Settings from './components/Settings.jsx'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -17,7 +20,6 @@ export default function App() {
   const [tab, setTab] = useState('dashboard')
 
   useEffect(() => {
-    // Auth state
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       if (session) loadShop(session.user.id)
@@ -32,23 +34,14 @@ export default function App() {
   }, [])
 
   const loadShop = async (userId) => {
-    const { data } = await supabase
-      .from('shops')
-      .select('*')
-      .eq('owner_id', userId)
-      .single()
+    const { data } = await supabase.from('shops').select('*').eq('owner_id', userId).single()
     setShop(data || null)
     setLoading(false)
   }
 
-  const handleOnboardingComplete = (newShop) => {
-    setShop(newShop)
-  }
-
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    setShop(null)
-    setSession(null)
+    setShop(null); setSession(null)
   }
 
   if (loading) return (
@@ -60,16 +53,18 @@ export default function App() {
   )
 
   if (!session) return <Login />
-
-  if (!shop) return <Onboarding userId={session.user.id} onComplete={handleOnboardingComplete} />
+  if (!shop) return <Onboarding userId={session.user.id} onComplete={(s)=>setShop(s)} />
 
   const TABS = {
     dashboard: <Dashboard shop={shop} />,
+    ai:        <AIChat shop={shop} />,
     billing:   <Billing shop={shop} />,
     inventory: <Inventory shop={shop} />,
+    purchases: <Purchases shop={shop} />,
     khata:     <KhataBook shop={shop} />,
     suppliers: <Suppliers shop={shop} />,
-    ai:        <AIChat shop={shop} />,
+    reports:   <Reports shop={shop} />,
+    settings:  <Settings shop={shop} onUpdate={(updatedShop) => setShop(updatedShop)} />,
   }
 
   return (
