@@ -16,7 +16,7 @@ async function callAI(systemPrompt, userMessage) {
         },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 150,
+          max_tokens: 300,
           system: systemPrompt,
           messages: [{ role: 'user', content: userMessage }]
         })
@@ -47,7 +47,7 @@ async function callAI(systemPrompt, userMessage) {
                 text: `${systemPrompt}\n\nUser: ${userMessage}`
               }]
             }],
-            generationConfig: { maxOutputTokens: 150, temperature: 0.7 }
+            generationConfig: { maxOutputTokens: 300, temperature: 0.7 }
           })
         }
       )
@@ -171,7 +171,7 @@ Important rules:
         body: new URLSearchParams({
           From: process.env.TWILIO_WA_NUMBER,
           To: From,
-          Body: replyText
+          Body: replyText.slice(0, 1000) // Max 1000 chars
         })
       }
     )
