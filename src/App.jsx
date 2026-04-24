@@ -10,7 +10,9 @@ import Purchases from './components/Purchases.jsx'
 import KhataBook from './components/KhataBook.jsx'
 import Suppliers from './components/Suppliers.jsx'
 import AIChat from './components/AIChat.jsx'
+import Expenses from './components/Expenses.jsx'
 import Reports from './components/Reports.jsx'
+import FinancialReports from './components/FinancialReports.jsx'
 import Settings from './components/Settings.jsx'
 
 export default function App() {
@@ -63,7 +65,9 @@ export default function App() {
     purchases: <Purchases shop={shop} />,
     khata:     <KhataBook shop={shop} />,
     suppliers: <Suppliers shop={shop} />,
+    expenses:  <Expenses shop={shop} />,
     reports:   <Reports shop={shop} />,
+    financial: <FinancialReports shop={shop} />,
     settings:  <Settings shop={shop} onUpdate={(s) => setShop(s)} />,
   }
 

@@ -8,7 +8,9 @@ const TABS = [
   { id:'purchases', emoji:'🛒', label:'Purchases' },
   { id:'khata',     emoji:'📒', label:'Khata' },
   { id:'suppliers', emoji:'🚚', label:'Suppliers' },
+  { id:'expenses',  emoji:'💸', label:'Expenses' },
   { id:'reports',   emoji:'📊', label:'Reports' },
+  { id:'financial', emoji:'💰', label:'Financial' },
   { id:'settings',  emoji:'⚙️', label:'Settings' },
 ]
 
