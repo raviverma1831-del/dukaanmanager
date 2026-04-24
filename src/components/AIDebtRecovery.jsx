@@ -175,7 +175,7 @@ export default function AIDebtRecovery({ shop }) {
           <p className="text-3xl font-bold text-red-600">₹{totalDebt.toLocaleString()}</p>
         </div>
         <div className="bg-white p-4 rounded-lg border border-orange-200 shadow-sm">
-          <p className="text-sm text-gray-600 font-medium">Overdue (>30 days)</p>
+          <p className="text-sm text-gray-600 font-medium">Overdue {'(>30 days)'}</p>
           <p className="text-3xl font-bold text-orange-600">{overdueCount}</p>
         </div>
         <div className="bg-white p-4 rounded-lg border border-pink-200 shadow-sm">
