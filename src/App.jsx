@@ -12,7 +12,6 @@ import Suppliers from './components/Suppliers.jsx'
 import AIChat from './components/AIChat.jsx'
 import Expenses from './components/Expenses.jsx'
 import Reports from './components/Reports.jsx'
-import FinancialReports from './components/FinancialReports.jsx'
 import AIPromotion from './components/AIPromotion.jsx'
 import WhatsAppVoiceBot from './components/WhatsAppVoiceBot.jsx'
 import B2BNetwork from './components/B2BNetwork.jsx'
@@ -71,7 +70,6 @@ export default function App() {
     suppliers: <Suppliers shop={shop} />,
     expenses:  <Expenses shop={shop} />,
     reports:   <Reports shop={shop} />,
-    financial: <FinancialReports shop={shop} />,
     promo:     <AIPromotion shop={shop} />,
     whatsapp:  <WhatsAppVoiceBot shop={shop} />,
     b2b:       <B2BNetwork shop={shop} />,

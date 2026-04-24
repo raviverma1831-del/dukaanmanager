@@ -3,270 +3,205 @@ import { supabase } from '../lib/supabase.js'
 
 export default function AIDebtRecovery({ shop }) {
   const [debtors, setDebtors] = useState([])
+  const [recoveryLogs, setRecoveryLogs] = useState([])
   const [loading, setLoading] = useState(false)
+  const [filter, setFilter] = useState('all')
   const [selectedDebtor, setSelectedDebtor] = useState(null)
-  const [callConfig, setCallConfig] = useState({
-    minDebt: 1000,
-    maxDaysOverdue: 90,
-    autoSchedule: true,
-    recurringDay: 15
-  })
-  const [recoveryLog, setRecoveryLog] = useState([])
 
   useEffect(() => {
-    loadDebtors()
-    loadRecoveryLog()
-  }, [shop])
+    if (shop?.id) {
+      loadDebtors()
+      loadRecoveryLogs()
+    }
+  }, [shop?.id])
 
   const loadDebtors = async () => {
-    const { data: customers } = await supabase
-      .from('customers')
-      .select('*')
-      .eq('shop_id', shop.id)
-      .gt('balance', callConfig.minDebt)
-      .order('balance', { ascending: false })
-
-    if (customers) {
-      const enriched = customers.map(c => {
-        const lastTransaction = c.last_transaction_date
-          ? new Date(c.last_transaction_date)
-          : new Date()
-        
-        const daysOverdue = Math.floor(
-          (Date.now() - lastTransaction.getTime()) / (1000 * 60 * 60 * 24)
-        )
-
-        return {
-          ...c,
-          daysOverdue,
-          isOverdue: daysOverdue > callConfig.maxDaysOverdue,
-          priority: c.balance > 10000 ? 'high' : c.balance > 5000 ? 'medium' : 'low'
-        }
-      })
-
-      setDebtors(enriched)
-    }
-  }
-
-  const loadRecoveryLog = async () => {
-    const { data } = await supabase
-      .from('recovery_logs')
-      .select('*')
-      .eq('shop_id', shop.id)
-      .order('created_at', { ascending: false })
-      .limit(10)
-
-    if (data) {
-      setRecoveryLog(data)
-    }
-  }
-
-  const initiateCall = async (debtor) => {
+    if (!shop?.id) return
     try {
-      setLoading(true)
-      
-      // Log the call initiation
-      const message = `🤖 Auto-call initiated to ${debtor.name} (${debtor.phone})\nOutstanding: ₹${debtor.balance}`
-      
-      const { error } = await supabase
-        .from('recovery_logs')
-        .insert({
-          shop_id: shop.id,
-          customer_id: debtor.id,
-          customer_name: debtor.name,
-          amount: debtor.balance,
-          call_type: 'ai_initiated',
-          status: 'initiated',
-          message,
-          call_date: new Date().toISOString()
-        })
-
-      if (!error) {
-        alert(`✅ Call queued for ${debtor.name}\n\n${message}`)
-        setSelectedDebtor(debtor)
-        loadRecoveryLog()
-      }
-    } catch (err) {
-      console.error('[v0] Error initiating call:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const sendPaymentReminder = async (debtor) => {
-    try {
-      const message = `Hello ${debtor.name},\n\nThis is a friendly reminder that you have an outstanding balance of ₹${debtor.balance} with ${shop.name}.\n\nPlease arrange payment at your earliest convenience.\n\nThank you!`
-      
-      alert(`📱 SMS ready:\n\n${message}\n\nTo: ${debtor.phone}`)
-    } catch (err) {
-      console.error('[v0] Error sending reminder:', err)
-    }
-  }
-
-  const scheduleRecoveryCall = async (debtor) => {
-    try {
-      const scheduleDate = new Date()
-      scheduleDate.setDate(scheduleDate.getDate() + 1)
-
-      const { error } = await supabase
-        .from('recovery_logs')
-        .insert({
-          shop_id: shop.id,
-          customer_id: debtor.id,
-          customer_name: debtor.name,
-          amount: debtor.balance,
-          call_type: 'scheduled',
-          status: 'scheduled',
-          message: `Scheduled for ${scheduleDate.toLocaleDateString()}`,
-          call_date: scheduleDate.toISOString()
-        })
-
-      if (!error) {
-        alert(`✅ Call scheduled for tomorrow at 10 AM`)
-        loadRecoveryLog()
-      }
-    } catch (err) {
-      console.error('[v0] Error scheduling call:', err)
-    }
-  }
-
-  const markAsPaid = async (debtor) => {
-    try {
-      const { error } = await supabase
+      const { data: customers } = await supabase
         .from('customers')
-        .update({ balance: 0 })
-        .eq('id', debtor.id)
-
-      if (!error) {
-        await supabase
-          .from('recovery_logs')
-          .insert({
-            shop_id: shop.id,
-            customer_id: debtor.id,
-            customer_name: debtor.name,
-            amount: debtor.balance,
-            call_type: 'payment_received',
-            status: 'resolved',
-            message: `Payment received - ₹${debtor.balance}`,
-            call_date: new Date().toISOString()
-          })
-
-        alert(`✅ ${debtor.name}'s debt cleared!`)
-        loadDebtors()
-        loadRecoveryLog()
+        .select('*')
+        .eq('shop_id', shop.id)
+        .gt('balance', 0)
+        .order('balance', { ascending: false })
+      
+      if (customers) {
+        const enriched = customers.map(c => {
+          const lastTxn = c.last_transaction_date ? new Date(c.last_transaction_date) : new Date()
+          const daysOverdue = Math.floor((Date.now() - lastTxn.getTime()) / (1000 * 60 * 60 * 24))
+          return {
+            ...c,
+            daysOverdue,
+            priority: c.balance > 10000 ? 'high' : c.balance > 5000 ? 'medium' : 'low'
+          }
+        })
+        setDebtors(enriched)
       }
     } catch (err) {
-      console.error('[v0] Error marking as paid:', err)
+      console.error('[v0] Error loading debtors:', err)
     }
   }
 
-  const totalDebt = debtors.reduce((sum, d) => sum + d.balance, 0)
-  const overdueCount = debtors.filter(d => d.isOverdue).length
-  const highPriority = debtors.filter(d => d.priority === 'high').length
+  const loadRecoveryLogs = async () => {
+    if (!shop?.id) return
+    try {
+      const { data } = await supabase
+        .from('recovery_logs')
+        .select('*')
+        .eq('shop_id', shop.id)
+        .order('call_date', { ascending: false })
+        .limit(50)
+      if (data) setRecoveryLogs(data)
+    } catch (err) {
+      console.error('[v0] Error loading logs:', err)
+    }
+  }
+
+  const scheduleRecoveryCall = async (customer) => {
+    try {
+      const callDate = new Date()
+      callDate.setHours(10, 0, 0, 0)
+      
+      await supabase.from('recovery_logs').insert([{
+        shop_id: shop.id,
+        customer_id: customer.id,
+        customer_name: customer.name,
+        customer_phone: customer.phone,
+        amount: customer.balance,
+        call_type: 'scheduled',
+        status: 'scheduled',
+        call_date: callDate.toISOString(),
+        message: `Payment reminder for ₹${customer.balance}`
+      }])
+
+      alert(`Call scheduled for ${customer.name}`)
+      loadRecoveryLogs()
+    } catch (err) {
+      console.error('[v0] Error:', err)
+    }
+  }
+
+  const markAsResolved = async (logId) => {
+    try {
+      await supabase.from('recovery_logs').update({ status: 'resolved' }).eq('id', logId)
+      loadRecoveryLogs()
+    } catch (err) {
+      console.error('[v0] Error:', err)
+    }
+  }
+
+  const stats = {
+    total: debtors.reduce((sum, d) => sum + (d.balance || 0), 0),
+    overdue: debtors.filter(d => d.daysOverdue > 30).length,
+    highPriority: debtors.filter(d => d.priority === 'high').length
+  }
+
+  const filteredDebtors = debtors.filter(d => {
+    if (filter === 'overdue') return d.daysOverdue > 30
+    if (filter === 'high') return d.priority === 'high'
+    return true
+  })
 
   return (
-    <div className="p-6 bg-gradient-to-br from-red-50 to-pink-50 rounded-lg">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">AI Debt Recovery</h2>
+    <div className="p-6 bg-gradient-to-br from-red-50 to-pink-50 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-800 mb-6">📞 AI Debt Recovery System</h1>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg border border-red-200 shadow-sm">
-          <p className="text-sm text-gray-600 font-medium">Total Outstanding</p>
-          <p className="text-3xl font-bold text-red-600">₹{totalDebt.toLocaleString()}</p>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-red-500">
+            <p className="text-sm text-gray-600">Total Outstanding</p>
+            <p className="text-3xl font-bold text-red-600">₹{stats.total.toLocaleString('en-IN')}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-orange-500">
+            <p className="text-sm text-gray-600">Overdue {'(>30 days)'}</p>
+            <p className="text-3xl font-bold text-orange-600">{stats.overdue}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-yellow-500">
+            <p className="text-sm text-gray-600">High Priority</p>
+            <p className="text-3xl font-bold text-yellow-600">{stats.highPriority}</p>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-orange-200 shadow-sm">
-          <p className="text-sm text-gray-600 font-medium">Overdue {'(>30 days)'}</p>
-          <p className="text-3xl font-bold text-orange-600">{overdueCount}</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-pink-200 shadow-sm">
-          <p className="text-sm text-gray-600 font-medium">High Priority</p>
-          <p className="text-3xl font-bold text-pink-600">₹{debtors.filter(d => d.priority === 'high').reduce((s, d) => s + d.balance, 0).toLocaleString()}</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-blue-200 shadow-sm">
-          <p className="text-sm text-gray-600 font-medium">Total Debtors</p>
-          <p className="text-3xl font-bold text-blue-600">{debtors.length}</p>
-        </div>
-      </div>
 
-      {/* Debtors Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-red-100 border-b-2 border-red-300">
-              <tr>
-                <th className="px-4 py-3 text-left font-semibold text-gray-800">Customer</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-800">Amount</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-800">Days Overdue</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-800">Priority</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-800">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {debtors.slice(0, 10).map((debtor) => (
-                <tr
-                  key={debtor.id}
-                  className={`border-b hover:bg-gray-50 ${
-                    debtor.isOverdue ? 'bg-red-50' : ''
-                  }`}
-                >
-                  <td className="px-4 py-3 font-medium">
-                    {debtor.name}
-                    {debtor.phone && <p className="text-xs text-gray-600">{debtor.phone}</p>}
-                  </td>
-                  <td className="px-4 py-3 font-bold text-red-600">₹{debtor.balance.toLocaleString()}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                      debtor.daysOverdue > 60 ? 'bg-red-200 text-red-800' :
-                      debtor.daysOverdue > 30 ? 'bg-orange-200 text-orange-800' :
-                      'bg-yellow-200 text-yellow-800'
-                    }`}>
-                      {debtor.daysOverdue} days
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                      debtor.priority === 'high' ? 'bg-red-300 text-red-900' :
-                      debtor.priority === 'medium' ? 'bg-orange-300 text-orange-900' :
-                      'bg-yellow-300 text-yellow-900'
-                    }`}>
-                      {debtor.priority.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => initiateCall(debtor)}
-                      disabled={loading}
-                      className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 disabled:opacity-50 mr-2"
-                    >
-                      Call
-                    </button>
-                    <button
-                      onClick={() => markAsPaid(debtor)}
-                      className="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600"
-                    >
-                      Paid
-                    </button>
-                  </td>
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6">
+          <button onClick={() => setFilter('all')} className={`px-4 py-2 rounded-lg font-medium transition ${filter === 'all' ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}>
+            All Debtors
+          </button>
+          <button onClick={() => setFilter('overdue')} className={`px-4 py-2 rounded-lg font-medium transition ${filter === 'overdue' ? 'bg-red-500 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}>
+            Overdue
+          </button>
+          <button onClick={() => setFilter('high')} className={`px-4 py-2 rounded-lg font-medium transition ${filter === 'high' ? 'bg-orange-500 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}>
+            High Priority
+          </button>
+        </div>
+
+        {/* Debtors List */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-100 border-b-2 border-gray-300">
+                <tr>
+                  <th className="px-4 py-3 text-left font-bold text-gray-700">Name</th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-700">Balance</th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-700">Days Overdue</th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-700">Priority</th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-700">Phone</th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-700">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredDebtors.map(d => (
+                  <tr key={d.id} className="border-b hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-800">{d.name}</td>
+                    <td className="px-4 py-3 text-red-600 font-bold">₹{(d.balance || 0).toLocaleString('en-IN')}</td>
+                    <td className="px-4 py-3">
+                      <span className={d.daysOverdue > 30 ? 'text-red-600 font-bold' : 'text-gray-600'}>{d.daysOverdue} days</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${d.priority === 'high' ? 'bg-red-100 text-red-700' : d.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                        {d.priority.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">{d.phone || 'N/A'}</td>
+                    <td className="px-4 py-3">
+                      <button onClick={() => scheduleRecoveryCall(d)} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded text-xs transition">
+                        📞 Call
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
 
-      {/* Recovery Log */}
-      <div className="bg-white rounded-lg shadow-md p-4">
-        <h3 className="font-bold text-lg mb-4 text-gray-800">Recent Recovery Activity</h3>
-        <div className="space-y-3">
-          {recoveryLog.map((log) => (
-            <div key={log.id} className="border-l-4 border-blue-400 pl-4 py-2">
-              <p className="font-semibold text-gray-800">{log.customer_name}</p>
-              <p className="text-sm text-gray-600">₹{log.amount} | {log.call_type.replace(/_/g, ' ')}</p>
-              <p className="text-xs text-gray-500">
-                {new Date(log.call_date).toLocaleDateString()} {new Date(log.call_date).toLocaleTimeString()}
-              </p>
-            </div>
-          ))}
+        {/* Recovery Activity */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">📋 Recent Recovery Activity</h2>
+          <div className="space-y-2">
+            {recoveryLogs.slice(0, 10).map(log => (
+              <div key={log.id} className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-bold text-gray-800">{log.customer_name}</h4>
+                    <p className="text-sm text-gray-600">₹{log.amount} • {log.call_type}</p>
+                    <p className="text-xs text-gray-500">{new Date(log.call_date).toLocaleString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${log.status === 'resolved' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                      {log.status.toUpperCase()}
+                    </span>
+                    {log.status === 'scheduled' && (
+                      <button onClick={() => markAsResolved(log.id)} className="block mt-2 bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded text-xs transition">
+                        ✓ Resolved
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
