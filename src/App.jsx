@@ -64,7 +64,7 @@ export default function App() {
     khata:     <KhataBook shop={shop} />,
     suppliers: <Suppliers shop={shop} />,
     reports:   <Reports shop={shop} />,
-    settings:  <Settings shop={shop} onUpdate={(updatedShop) => setShop(updatedShop)} />,
+    settings:  <Settings shop={shop} onUpdate={(s) => setShop(s)} />,
   }
 
   return (
