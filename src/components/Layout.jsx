@@ -11,6 +11,10 @@ const TABS = [
   { id:'expenses',  emoji:'💸', label:'Expenses' },
   { id:'reports',   emoji:'📊', label:'Reports' },
   { id:'financial', emoji:'💰', label:'Financial' },
+  { id:'promo',     emoji:'🔥', label:'Promos' },
+  { id:'whatsapp',  emoji:'💬', label:'WhatsApp' },
+  { id:'b2b',       emoji:'🤝', label:'B2B' },
+  { id:'recovery',  emoji:'📞', label:'Recovery' },
   { id:'settings',  emoji:'⚙️', label:'Settings' },
 ]
 
