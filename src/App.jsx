@@ -10,8 +10,12 @@ import Purchases from './components/Purchases.jsx'
 import KhataBook from './components/KhataBook.jsx'
 import Suppliers from './components/Suppliers.jsx'
 import AIChat from './components/AIChat.jsx'
+import AIMarketing from './components/AIMarketing.jsx'
+import B2BNetwork from './components/B2BNetwork.jsx'
+import AIUdharCalls from './components/AIUdharCalls.jsx'
 import Reports from './components/Reports.jsx'
 import Settings from './components/Settings.jsx'
+import PremiumPlans from './components/PremiumPlans.jsx'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -46,8 +50,8 @@ export default function App() {
 
   if (loading) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', flexDirection:'column', gap:16, background:'#f0fdf4' }}>
-      <div style={{ fontSize:48 }}>🏪</div>
-      <div style={{ fontFamily:"'Baloo 2',cursive", fontWeight:800, fontSize:20, color:'#14532d' }}>DukaanManager</div>
+      <div style={{ fontSize:52 }}>🏪</div>
+      <div style={{ fontFamily:"'Baloo 2',cursive", fontWeight:900, fontSize:22, color:'#14532d' }}>DukaanManager</div>
       <div style={{ color:'#6b7280', fontSize:14 }}>Loading...</div>
     </div>
   )
@@ -63,7 +67,11 @@ export default function App() {
     purchases: <Purchases shop={shop} />,
     khata:     <KhataBook shop={shop} />,
     suppliers: <Suppliers shop={shop} />,
+    marketing: <AIMarketing shop={shop} />,
+    b2b:       <B2BNetwork shop={shop} />,
+    udhar:     <AIUdharCalls shop={shop} />,
     reports:   <Reports shop={shop} />,
+    plans:     <PremiumPlans currentPlan="free" />,
     settings:  <Settings shop={shop} onUpdate={(s) => setShop(s)} />,
   }
 
