@@ -364,7 +364,7 @@ export default function Billing({ shop }) {
 
                   {/* Payment Mode */}
                   <div style={{ display:'flex', gap:5, marginBottom:10, flexWrap:'wrap' }}>
-                    {[['cash','💵'],['upi','📱'],['bank','🏦'],['udhar','📒']].filter(([k])=>k==='udhar'||payModes[k]).map(([k,l])=>(
+                    {[['cash','💵 Cash'],['upi','📱 UPI'],['bank','🏦 Bank'],['udhar','📒 Udhar']].filter(([k])=>k==='udhar'||payModes[k]).map(([k,l])=>(
                       <button key={k} onClick={()=>setPayMode(k)} style={{ flex:1, minWidth:50, background:payMode===k?C.g:'#fff', color:payMode===k?'#fff':C.text, border:`1.5px solid ${payMode===k?C.g:C.border}`, borderRadius:8, padding:'6px', fontSize:13, fontWeight:800, cursor:'pointer' }}>{l}</button>
                     ))}
                   </div>
