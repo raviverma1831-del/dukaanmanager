@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { C, BIZ_TYPES } from '../lib/constants.js'
+import { PayPalSettings } from './PayPalPayment.jsx'
 
 export default function Settings({ shop, onUpdate, onSignOut }) {
   const [form, setForm] = useState({
@@ -183,6 +184,7 @@ export default function Settings({ shop, onUpdate, onSignOut }) {
         <Section id="payment" emoji="💳" label="Payment & Customers" />
         <Section id="fy"      emoji="📅" label="Financial Year" />
         <Section id="backup"  emoji="💾" label="Backup & Export" />
+        <Section id="paypal"  emoji="🅿️" label="PayPal" />
         <Section id="danger"  emoji="⚠️" label="Danger Zone" />
       </div>
 
@@ -358,6 +360,9 @@ export default function Settings({ shop, onUpdate, onSignOut }) {
             </div>
           </div>
         )}
+
+        {/* PAYPAL */}
+        {activeSection === 'paypal' && <PayPalSettings />}
       </div>
 
       {/* Save Button — only for basic/gst/payment sections */}
