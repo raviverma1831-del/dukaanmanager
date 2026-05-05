@@ -17,6 +17,7 @@ const TABS = [
   { id: 'udhar',       emoji: '📊', label: 'Aging',        group: 'extra' },
   { id: 'ledgers',     emoji: '📒', label: 'Ledgers',      group: 'extra' },
   { id: 'plans',       emoji: '💎', label: 'Plans',        group: 'extra' },
+  { id: 'affiliate',   emoji: '💰', label: 'Affiliate',    group: 'extra' },
   { id: 'settings',    emoji: '⚙️', label: 'Settings',    group: 'extra' },
 ]
 

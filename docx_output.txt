@@ -1,0 +1,570 @@
+🏪 DukaanManager
+India Ka Pehla All-in-One WhatsApp Business Bot
+Ek Baar Register Karo — Baaki Sab WhatsApp Pe! 
+App Kholne Ki Zaroorat Nahi — Kabhi Bhi, Kahin Bhi!
+🗣️
+Local Language
+Hindi, Hinglish, Regional
+🤖
+AI Powered
+Claude API Brain
+📱
+WhatsApp Only
+No App Needed
+1. 🎯 Vision — Kya Banana Hai
+India mein 6.3 crore chhote dukandaar hain. Inme se 90% abhi bhi notebook pe hisaab karte hain. Padhe-likhe ho ya na ho — agar WhatsApp chala sakte hain, toh DukaanManager use kar sakte hain.
+GOAL: Ek dukaandaar apni local bhasha mein WhatsApp pe baat kare aur bot uska poora kaam kar de — bill banana, udhar likhna, stock check karna, GST report, balance sheet — sab kuch bina app khole!
+Feature
+Traditional App
+DukaanManager Bot
+Usage
+App kholna padta hai
+Sirf WhatsApp message
+Language
+English only
+Hindi, Hinglish, Regional
+Literacy
+Padhna zaroori
+Bol ke bhi kaam
+Training
+Days lagते hain
+15 minute mein ready
+Internet
+Fast net chahiye
+2G pe bhi chalega
+Cost
+₹500-2000/month
+₹199/month se
+2. 🤖 Bot Ki Poori Takat — Kya Kya Kar Sakta Hai
+2.1 💬 Billing & Invoicing
+Dukaandaar bolega — bot bill bana dega, PDF banayega, customer ko WhatsApp pe bhejega, record rakhega.
+Dukaandaar: "Harish ka bill banao — 2kg atta 60, 1 tel 130"
+Bot Response:
+✅ Bill Ready!
+━━━━━━━━━━━━━━━━━━━━
+🧾 BILL #247 — Harish Kumar
+📅 Aaj: 3 May 2026
+━━━━━━━━━━━━━━━━━━━━
+• Aashirvaad Atta 2kg     ₹120
+• Fortune Tel 1L          ₹130
+━━━━━━━━━━━━━━━━━━━━
+💰 Total: ₹250
+━━━━━━━━━━━━━━━━━━━━
+Cash ya Udhar? Reply: 1-Cash  2-Udhar  3-UPI
+Command
+Bot Kya Karega
+"Bill banao"
+Interactive bill creation wizard
+"[Name] ka bill bhejo"
+Existing bill PDF forward karo
+"Aaj ke saare bills"
+Aaj ki billing summary
+"Last bill edit karo"
+Recent bill modify karo
+"Bill cancel karo"
+Confirmation ke baad cancel
+"GST bill banao"
+Tax invoice with GSTIN
+2.2 📦 Inventory Management
+Stock khatam hone se pehle alert, photo se item add karo, voice se update karo.
+Dukaandaar: *stock photo bheja*
+Bot Response:
+📸 Photo dekh liya! Stock update:
+✅ Aashirvaad Atta — Added 50kg
+✅ Fortune Tel — Added 24 bottles
+⚠️ Surf Excel — Low stock detected
+Kya Sharma Wholesalers ko order bhejun?
+Reply: Haan / Nahi
+Command
+Bot Kya Karega
+"Stock batao"
+Full inventory list with quantities
+"Atta kitna bacha?"
+Specific item stock check
+"50kg atta aaya ₹2500"
+Purchase entry + stock update
+"Atta expire ho raha"
+Expiry flag + discount suggestion
+"Dead stock batao"
+30+ din se na bika items
+"Stock value kitni hai"
+Total inventory value calculation
+"Low stock alert set karo 5kg"
+Custom reorder point set
+2.3 💰 Udhar (Credit) Management
+Udhar dena, lena, reminders — sab WhatsApp se. Kabhi koi bhi udhar miss nahi hoga.
+Dukaandaar: "Sunita ne 500 diye"
+Bot Response:
+✅ Payment Received!
+━━━━━━━━━━━━━━━━━━━━
+👤 Sunita Devi
+💳 Paid: ₹500
+📊 Previous Balance: ₹1,200
+📊 Remaining: ₹700
+━━━━━━━━━━━━━━━━━━━━
+📱 Sunita ko receipt bhej doon? Haan/Nahi
+Command
+Bot Kya Karega
+"Sabka udhar batao"
+Complete udhar list, total amount
+"Ramesh ka udhar"
+Individual customer account
+"30 din wale sabko reminder"
+Auto reminder to all overdues
+"Sunita ka udhar maaf karo"
+Confirmation + waive off entry
+"Udhar report bhejo"
+PDF report of all pending
+"Is mahine kitna udhar hua"
+Monthly credit summary
+2.4 🏪 Customer Management
+Har customer ki history, purchases, preferences — sab ek jagah. Naam se dhundho, number se dhundho.
+Command
+Bot Kya Karega
+"Ramesh dhundho"
+Customer search with details
+"Naya customer add karo"
+Customer creation wizard
+"Top 10 customers"
+Best customers by purchase
+"Ramesh ne kya kharida"
+Customer purchase history
+"VIP customers ko message"
+Bulk message to top customers
+"Birthday wale customers"
+Birthday list for marketing
+2.5 📊 GST & Tax Reports
+Registered dukaandaar ke liye complete GST reporting — GSTR-1, GSTR-3B, tax calculation sab WhatsApp pe.
+Dukaandaar: "April ki GST R1 report bhejo"
+Bot Response:
+📊 GSTR-1 Report — April 2026
+━━━━━━━━━━━━━━━━━━━━━━━━
+🏪 Shop: Ravi General Store
+📋 GSTIN: 09XXXXX1234X1Z5
+━━━━━━━━━━━━━━━━━━━━━━━━
+📦 Taxable Sales:     ₹1,85,000
+🔢 CGST (9%):          ₹16,650
+🔢 SGST (9%):          ₹16,650
+💰 Total Tax:          ₹33,300
+━━━━━━━━━━━━━━━━━━━━━━━━
+📄 PDF report attach kar raha hoon...
+✅ Report ready! CA ko forward karoon?
+Command
+Bot Kya Karega
+"GSTR-1 report"
+Monthly outward supply report
+"GSTR-3B summary"
+Tax liability summary
+"GST calculate karo"
+Real-time tax calculation
+"HSN code batao atta ka"
+Product HSN code lookup
+"Input tax credit"
+ITC available calculation
+"Annual GST summary"
+Yearly tax overview
+2.6 📈 Balance Sheet & Financial Reports
+Report Type
+Command Example
+Aaj ka P&L
+"Aaj ka hisaab batao"
+Weekly Summary
+"Is hafte kitna hua"
+Monthly P&L
+"April ka balance sheet"
+Expense Report
+"Is mahine kharcha kitna"
+Profit Analysis
+"Sabse zyada munafa kisme"
+Annual Report
+"2025-26 ka poora hisaab"
+Cash Flow
+"Paisa kahan se aaya kahan gaya"
+2.7 📸 Photo Intelligence (Unique Feature)
+Dukaandaar photo khichega — bot samjhega kya hai aur automatically sab update kar dega. Padha-likha ho ya na ho — koi fark nahi!
+📸 Supported Photo Types:
+• Receipt/Invoice photo → Auto expense entry
+• Stock shelf photo → Inventory visual check
+• Bill photo → Digitize purana bill
+• Product photo → New item add with price
+• Damage photo → Loss entry with evidence
+2.8 🎙️ Voice Message Support
+Koi typing nahi — bol do aur bot kar dega. Hindi, Hinglish, Bhojpuri, Awadhi — sab samjhega.
+Dukaandaar: *voice message*
+"Bhai Ramesh aaya tha, usne 2 kilo atta",
+ ek dabba tel aur 5 biscuit ke packet liye.
+ Cash mein 200 diya baaki udhar."
+Bot: ✅ Samajh gaya! Processing...
+• Atta 2kg — ₹120
+• Tel 1L — ₹130
+• Biscuit x5 — ₹50
+• Total: ₹300
+• Cash: ₹200 | Udhar: ₹100
+• Ramesh ke udhar mein ₹100 add ho gaya
+Sab sahi hai? Haan/Nahi/Edit
+2.9 🎯 Marketing & Offers
+Festival offers, targeted promotions, bulk WhatsApp marketing — sab bot se.
+Command
+Bot Kya Karega
+"Diwali offer banao 10%"
+Offer message create + send to all
+"Top 50 customers ko message"
+Targeted bulk message
+"Atta par offer lagao"
+Product-specific offer
+"Udhar wale customers ko reminder"
+Smart payment reminder
+"Happy birthday [Name]"
+Personalized customer message
+"Naya product launch announce"
+New item announcement
+"Dead stock offer banao"
+Auto discount for slow movers
+2.10 💡 Proactive AI Suggestions
+Bot khud dekh ke smart suggestions dega — bina pooche!
+🤖 Bot (Subah 8 baje):
+Namaste! Aaj ki important updates:
+⚠️ LOW STOCK ALERT:
+• Aashirvaad Atta — sirf 5kg bacha
+  Sharma Wholesalers ko order karoon? (Haan/Nahi)
+💰 UDHAR DUE TODAY:
+• Sunita — ₹800 | Rahul — ₹1,200
+  Dono ko reminder bhejoon? (Haan/Nahi)
+📅 UPCOMING:
+• Kal Eid hai — special offer banayein?
+• 3 customers ka birthday is hafte
+2.11 📅 Auto Daily Reports
+🤖 Bot (Raat 9 baje — Automatic):
+━━━━━━━━━━━━━━━━━━━━━━━━
+📊 AAJ KA HISAAB — 3 May 2026
+━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Total Bikri:        ₹8,750
+🛒 Kharcha (Purchase): ₹3,200
+📈 Gross Profit:       ₹5,550
+💳 Cash Mila:         ₹6,500
+📝 Naya Udhar:        ₹1,200
+✅ Udhar Wapas:        ₹950
+━━━━━━━━━━━━━━━━━━━━━━━━
+📦 LOW STOCK (3 items):
+• Atta, Tel, Chai
+━━━━━━━━━━━━━━━━━━━━━━━━
+🏆 Top Sale: Fortune Tel (18 bottles)
+👤 Top Customer: Ramesh (₹1,200)
+2.12 🛒 Supplier & Purchase Management
+Command
+Bot Kya Karega
+"Sharma se maal aaya"
+Purchase entry wizard
+"Sharma ka hisaab"
+Supplier ledger view
+"Order lagao Sharma ko"
+WhatsApp order to supplier
+"Sabse sasta supplier"
+Price comparison report
+"Purchase history"
+Monthly purchase summary
+"Supplier payment karo"
+Payment entry + receipt
+3. 📋 Smart Menu System
+New user? Koi baat nahi. 'Menu' type karo — sab option aa jayenge!
+Dukaandaar: "Menu"
+🏪 DukaanManager Menu
+━━━━━━━━━━━━━━━━━━
+1️⃣  Bill Banao
+2️⃣  Stock Check/Update
+3️⃣  Udhar Dekho/Do
+4️⃣  Aaj Ki Report
+5️⃣  Customer Dhundho
+6️⃣  Purchase Add Karo
+7️⃣  Kharcha Likho
+8️⃣  Reminder Bhejo
+9️⃣  GST Report
+🔟  Marketing/Offer
+━━━━━━━━━━━━━━━━━━
+Number type karo ya seedha bolo! 💬
+4. 🏗️ Technical Architecture
+4.1 Complete Flow Diagram
+DUKAANDAAR MESSAGE (Hindi/Voice/Photo)
+         ↓
+META WHATSAPP CLOUD API (Receive)
+         ↓
+SUPABASE EDGE FUNCTION (Webhook)
+         ↓
+SHOP IDENTIFICATION (Phone → Shop ID)
+         ↓
+CONTEXT BUILDER (Fetch shop data)
+         ↓
+CLAUDE API BRAIN (Understand + Decide)
+         ↓
+ACTION EXECUTOR (DB update + Response)
+         ↓
+META WHATSAPP CLOUD API (Send response)
+         ↓
+DUKAANDAAR KO REPLY ✅
+4.2 Tech Stack
+Layer
+Technology
+Purpose
+WhatsApp
+Meta Cloud API
+Message send/receive
+Backend
+Supabase Edge Functions
+Webhook handler
+Database
+Supabase PostgreSQL
+All shop data
+AI Brain
+Claude 3.5 Sonnet API
+Understand + decide
+Voice STT
+OpenAI Whisper API
+Voice to text
+Photo AI
+Claude Vision API
+Photo understanding
+PDF
+Puppeteer/PDFKit
+Bill PDF generate
+SMS Backup
+Twilio
+Offline SMS alerts
+Scheduler
+Supabase Cron
+Daily auto reports
+Auth
+Supabase Auth
+Shop authentication
+Storage
+Supabase Storage
+Bill PDFs, photos
+Realtime
+Supabase Realtime
+Live stock updates
+4.3 Message Processing Logic
+async function processMessage(message, shopId) {
+  // 1. Get shop full context
+  const context = await getShopContext(shopId);
+  // 2. Detect message type
+  if (message.type === 'audio') {
+    message.text = await whisper.transcribe(message.audio);
+  }
+  if (message.type === 'image') {
+    message.text = await claude.vision(message.image);
+  }
+  // 3. Send to Claude with full context
+  const action = await claude.decide({
+    userMessage: message.text,
+    shopData: context,
+    systemPrompt: DUKAANMANAGER_PROMPT
+  });
+  // 4. Execute action on database
+  await executeAction(action, shopId);
+  // 5. Send WhatsApp response
+  await whatsapp.send(action.response, shopId);
+}
+4.4 Database Schema
+Table
+Key Columns
+Purpose
+shops
+id, name, phone, gstin, plan
+Shop master data
+products
+shop_id, name, stock, price, hsn
+Inventory
+customers
+shop_id, name, phone, udhar_balance
+Customer data
+bills
+shop_id, customer_id, items, total, type
+All bills/invoices
+transactions
+shop_id, type, amount, reference
+All payments
+purchases
+shop_id, supplier_id, items, total
+Purchase records
+suppliers
+shop_id, name, phone, balance
+Supplier data
+expenses
+shop_id, category, amount, date
+Expense tracking
+bot_sessions
+shop_id, state, context, updated_at
+Conversation state
+auto_alerts
+shop_id, type, triggered_at, sent
+Alert tracking
+5. 🔒 Security & Privacy
+Security Layer
+Implementation
+Protection
+Data Isolation
+RLS policies per shop_id
+No data leakage
+Auth
+OTP on new device
+Unauthorized access
+Big Transactions
+Confirm > ₹10,000
+Accidental entries
+Destructive Actions
+Double confirm
+Data loss prevention
+API Keys
+.env Supabase Vault
+Key exposure
+Encryption
+AES-256 at rest
+Data breach
+Audit Log
+All actions logged
+Dispute resolution
+Session
+24hr token expiry
+Session hijack
+// Security Check Example
+if (action.type === 'delete_customer') {
+  await whatsapp.send(
+    '⚠️ WARNING: Ramesh Kumar ka poora data delete hoga.\n' +
+    'Udhar: ₹2,500 bhi hat jayega.\n' +
+    'Confirm karo: DELETE likhke bhejo'
+  );
+  await session.setAwaitingConfirm('DELETE_CUSTOMER', customerId);
+}
+6. 🚀 Onboarding Flow
+Nayi dukaan register hoti hai → Supabase webhook fire hota hai → Welcome message jaata hai → 15 minute mein bot ready!
+🎉 Welcome to DukaanManager!
+Namaste [Owner Name] ji! 🙏
+Aapki dukaan '[Shop Name]' register ho gayi!
+Main aapka Personal AI Assistant hoon.
+Ab aapko dukaan ka koi app nahi kholna —
+bas mujhe WhatsApp pe bolo!
+Setup karte hain — 3 simple steps:
+STEP 1: Apni 3 main items bataiye
+(Jaise: "Atta, Tel, Chawal")
+Reply: "Setup shuru karo" 👇
+Step
+Bot Action
+Time
+1. Welcome
+Auto message on registration
+Instant
+2. Items Setup
+Top 10 products add karo
+5 min
+3. Customers
+Import existing customers
+5 min
+4. Test
+Ek bill banao practice
+3 min
+5. Ready!
+Full bot access unlocked
+Instant
+7. 🗣️ Multi-Language Intelligence
+Bot samjhega chahe koi bhi bhasha mein bolo — Hindi, Hinglish, English, ya regional.
+Dukaandaar Bola
+Language
+Bot Samjha
+"Bill banao Ramesh ka"
+Hindi
+Create bill for Ramesh
+"Ramesh ka bill bana do bhai"
+Hinglish
+Create bill for Ramesh
+"Make bill for Ramesh"
+English
+Create bill for Ramesh
+"Ramesh ke waaste bill"
+Awadhi
+Create bill for Ramesh
+"Stock khatam ho gawa"
+Bhojpuri
+Stock running low alert
+"Paisa aaya Sunita se"
+Hindi
+Record payment from Sunita
+8. 💳 Pricing Plans
+Feature
+Basic ₹199/m
+Pro ₹499/m
+Enterprise ₹999/m
+WhatsApp Bot
+✅
+✅
+✅
+Bills/Month
+500
+Unlimited
+Unlimited
+GST Reports
+❌
+✅
+✅
+Balance Sheet
+❌
+✅
+✅
+Marketing Bot
+❌
+✅
+✅
+Voice Support
+❌
+✅
+✅
+Photo AI
+❌
+✅
+✅
+Multiple Staff
+1
+3
+Unlimited
+Priority Support
+❌
+❌
+✅
+9. 🗓️ Development Roadmap
+Phase
+Features
+Timeline
+MVP (v1.0)
+Bill, Udhar, Stock, Daily Report
+Month 1-2
+v1.5
+GST Reports, Supplier Mgmt, Voice
+Month 2-3
+v2.0
+Photo AI, Marketing Bot, Balance Sheet
+Month 3-4
+v2.5
+Multi-language, Multi-staff, Analytics
+Month 4-5
+v3.0
+Payment integration, Delivery, POS
+Month 5-6
+10. ✅ Next Steps — Abhi Kya Karo
+PRIORITY ORDER — Ek Ek Karo!
+Priority
+Action
+#1 Turant
+Meta for Developers pe WhatsApp App create karo
+#2 Is Hafte
+Supabase Edge Function (Webhook) banao
+#3 Is Hafte
+Claude API key lao + system prompt likho
+#4 Agla Hafte
+Bill + Udhar bot ka basic flow test karo
+#5 Month 1
+10 beta dukaan se feedback lo
+#6 Month 2
+Voice + GST features add karo
+#7 Month 3
+100 dukaan onboard karo
+DukaanManager — India Ka Pehla All-in-One WhatsApp Business Bot
+Har dukaandaar ka sapna: Ek baar setup, lifetime automatic!
+Made with ❤️ for India's 6.3 Crore Shop Owners

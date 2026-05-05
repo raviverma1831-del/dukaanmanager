@@ -14,7 +14,7 @@ const PLANS = [
     ]
   },
   {
-    id: 'standard', name: 'Standard', price: 199, emoji: '⭐', color: C.blue,
+    id: 'basic', name: 'Basic', price: 299, emoji: '⭐', color: C.blue,
     features: [
       ['✅', 'Everything in Free'],['✅', 'Unlimited Products'],['✅', 'Purchase Management'],
       ['✅', 'GST Reports (B2B+B2C)'],['✅', 'P&L + Balance Sheet'],['✅', 'Expense Management'],
@@ -23,9 +23,9 @@ const PLANS = [
     ]
   },
   {
-    id: 'pro', name: 'Pro', price: 399, emoji: '🚀', color: C.g, popular: true,
+    id: 'pro', name: 'Pro', price: 699, emoji: '🚀', color: C.g, popular: true,
     features: [
-      ['✅', 'Everything in Standard'],['✅', 'AI WhatsApp Bot (1000 msgs)'],
+      ['✅', 'Everything in Basic'],['✅', 'AI WhatsApp Bot (1000 msgs)'],
       ['✅', 'AI Marketing + Bulk Send'],['✅', 'B2B Network Access'],
       ['✅', 'Udhar Recovery (500 msgs)'],['✅', 'Campaign History'],
       ['✅', 'Priority Support'],['❌', 'Multi-branch'],['❌', 'Staff Login'],
@@ -33,7 +33,7 @@ const PLANS = [
     ]
   },
   {
-    id: 'business', name: 'Business', price: 799, emoji: '💎', color: '#7c3aed',
+    id: 'business', name: 'Enterprise', price: 1499, emoji: '💎', color: '#7c3aed',
     features: [
       ['✅', 'Everything in Pro'],['✅', '3 Branches'],['✅', 'Staff Login (3 users)'],
       ['✅', 'AI WhatsApp Bot (5000 msgs)'],['✅', 'Bulk Marketing (2000 msgs)'],

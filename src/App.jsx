@@ -20,6 +20,7 @@ import PremiumPlans from './components/PremiumPlans.jsx'
 import Vouchers from './components/Vouchers.jsx'
 import FixedAssets from './components/FixedAssets.jsx'
 import CapitalAccounts from './components/CapitalAccounts.jsx'
+import Affiliate from './components/Affiliate.jsx'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -90,6 +91,7 @@ export default function App() {
     ledgers:    <Ledgers shop={shop} />,
     reports:    <Reports shop={shop} />,
     plans:      <PremiumPlans currentPlan={currentPlan} shop={shop} />,
+    affiliate:  <Affiliate shop={shop} />,
     settings:   <Settings shop={shop} onUpdate={(s) => setShop(s)} onSignOut={handleSignOut} />,
   }
 
