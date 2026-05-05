@@ -5,14 +5,53 @@ import { C } from '../lib/constants.js'
 export default function AIChat({ shop }) {
   const [msgs, setMsgs] = useState([{
     role:'bot',
-    text:`Namaste! Main ${shop.name} ka AI Assistant hoon 🤖\n\nAap mujhse yeh keh sakte hain:\n• "Harish ko 2kg sugar ka bill bana do"\n• "Aaj ki kamai ki summary batao"\n• "Sugar ka stock batao"\n• "Sharma Wholesalers ko order bhej do"\n• "Sunita ka balance batao"\n• "Kal Diwali offer hai sabko promo bhejo"`
+    text:`Namaste! Main ${shop.name} ka AI Assistant hoon 🤖\n\nAap bol kar ya likh kar commands de sakte hain:\n• "Harish ko 2kg sugar ka bill bana do"\n• "Naya customer Rahul add karo number 9876543210"\n• "10kg atta purchase chadha do, 500 cash diya"\n• "Sunita ka balance batao aur usko call lagao"\n• "Aaj ki kamai ki summary batao"`
   }])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [isListening, setIsListening] = useState(false)
   const [pendingPayment, setPendingPayment] = useState(null)
   const endRef = useRef(null)
+  const recognitionRef = useRef(null)
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior:'smooth' }) }, [msgs])
+
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition()
+      recognition.continuous = false
+      recognition.interimResults = false
+      recognition.lang = 'hi-IN'
+      
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript
+        setInput(prev => (prev ? prev + ' ' : '') + transcript)
+        setIsListening(false)
+      }
+      
+      recognition.onerror = (event) => {
+        console.error("Speech error:", event.error)
+        setIsListening(false)
+      }
+      
+      recognition.onend = () => {
+        setIsListening(false)
+      }
+      
+      recognitionRef.current = recognition
+    }
+  }, [])
+
+  const toggleListen = () => {
+    if (isListening) {
+      recognitionRef.current?.stop()
+      setIsListening(false)
+    } else {
+      recognitionRef.current?.start()
+      setIsListening(true)
+    }
+  }
 
   const addMsg = (role, text, meta) => setMsgs(m => [...m, { role, text, meta, time: new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) }])
 
@@ -29,6 +68,42 @@ export default function AIChat({ shop }) {
   const executeAction = async (action, data, ctx) => {
     const today = new Date().toISOString().slice(0,10)
 
+    if (action === 'create_customer') {
+      const { data: newC } = await supabase.from('customers').insert({ shop_id:shop.id, name:data.customer_name, phone:data.customer_phone||'', type:'retail', balance:0 }).select().single()
+      if (newC) addMsg('bot', `✅ Naya customer "${newC.name}" add ho gaya hai.`)
+    }
+
+    if (action === 'add_purchase') {
+      let totalAmount = 0
+      for (const item of (data.items||[])) {
+        const prod = ctx.products.find(p => p.name.toLowerCase().includes((item.name||'').toLowerCase()))
+        if (prod && !prod.is_service) {
+          await supabase.from('products').update({ stock: prod.stock + (item.qty||1) }).eq('id', prod.id)
+          totalAmount += (prod.wholesale_price || prod.retail_price) * (item.qty||1)
+        }
+      }
+      if (totalAmount > 0) {
+        await supabase.from('transactions').insert({ shop_id:shop.id, amount:totalAmount, type:'debit', mode:data.payment_mode||'cash', note:`Purchase: ${(data.items||[]).map(i=>i.name).join(', ')}`, tx_date:today })
+        addMsg('bot', `✅ Purchase chadha di gayi! Stock update ho gaya aur ₹${totalAmount} ka kharcha (debit) record hua.`)
+      } else {
+        addMsg('bot', `❌ Product nahi mila. Pehle item inventory me add karein.`)
+      }
+    }
+
+    if (action === 'call_customer' || action === 'ask_payment') {
+      const c = ctx.customers.find(c=>c.name.toLowerCase().includes((data.customer_name||'').toLowerCase()))
+      if (c && c.phone) {
+        if (action === 'call_customer') {
+          addMsg('bot', `📞 ${c.name} ka number: ${c.phone}\nNeeche button se direct call lagayein:`, { tag:'call', phone:c.phone, name:c.name })
+        } else {
+          const msg = `Namaste ${c.name} ji, ${shop.name} se baat kar rahe hain. Aapka ₹${c.balance||0} baaki hai, kripya jald payment karein. 🙏`
+          addMsg('bot', `📲 ${c.name} ko Udhar Reminder bhejna hai?`, { tag:'wa_preview', waText:msg, phone:c.phone })
+        }
+      } else {
+        addMsg('bot', `❌ "${data.customer_name}" ka number nahi mila!`)
+      }
+    }
+
     if (action === 'create_bill') {
       let customer = ctx.customers.find(c => c.name.toLowerCase().includes((data.customer_name||'').toLowerCase()))
       let isNew = false
@@ -44,7 +119,6 @@ export default function AIChat({ shop }) {
       if (billItems.length===0) { addMsg('bot','❌ Product nahi mila inventory mein. Pehle product add karein.'); return }
       const total = billItems.reduce((s,i)=>s+i.retail_price*i.qty, 0)
 
-      // WhatsApp bill text
       const billText = `🧾 *${shop.name}*\nDate: ${today}\n━━━━━━━━━━━━\n${billItems.map(i=>`• ${i.name} ×${i.qty} = ₹${i.retail_price*i.qty}`).join('\n')}\n━━━━━━━━━━━━\n💰 *Total: ₹${total}*`
       addMsg('bot', `📱 Bill taiyar!\n\n${billText}`, { tag:'wa_preview', waText:billText, phone:customer?.phone })
 
@@ -79,6 +153,15 @@ export default function AIChat({ shop }) {
       const { data: allCusts } = await supabase.from('customers').select('name,phone').eq('shop_id', shop.id).not('phone','is',null)
       addMsg('bot',`📣 Promo Message:\n\n${data.message}\n\n${(allCusts||[]).length} customers ko WhatsApp blast kar sakte ho!`, { tag:'promo', promoText:data.message, customers: allCusts||[] })
     }
+    
+    if (action === 'update_settings') {
+      if (data.update_type === 'name') {
+        await supabase.from('shops').update({ name: data.value }).eq('id', shop.id)
+        addMsg('bot', `✅ Dukaan ka naam badal kar "${data.value}" kar diya gaya hai!`)
+      } else {
+        addMsg('bot', `⚙️ Settings update karne ke liye aap menu se "Settings" tab mein jaa sakte hain.`)
+      }
+    }
   }
 
   const finalizeBill = async (customer, items, total, payMode, today) => {
@@ -104,7 +187,6 @@ export default function AIChat({ shop }) {
     const userMsg = input.trim(); setInput('')
     addMsg('user', userMsg)
 
-    // Handle pending payment confirmation
     if (pendingPayment) {
       const lower = userMsg.toLowerCase()
       let mode = 'udhar'
@@ -119,28 +201,29 @@ export default function AIChat({ shop }) {
     setLoading(true)
     try {
       const ctx = await buildContext()
-      const systemPrompt = `You are an AI assistant for "${ctx.shop.name}", a ${ctx.shop.type} run by ${ctx.shop.owner}.
+      const systemPrompt = `You are an AI assistant with FULL ACCESS for "${ctx.shop.name}", a ${ctx.shop.type} run by ${ctx.shop.owner}.
 
 SHOP DATA:
 Products: ${JSON.stringify(ctx.products.map(p=>({id:p.id,name:p.name,price:p.retail_price,stock:p.stock,unit:p.unit})))}
 Customers: ${JSON.stringify(ctx.customers.map(c=>({id:c.id,name:c.name,phone:c.phone,balance:c.balance})))}
-Suppliers: ${JSON.stringify(ctx.suppliers)}
-Today Sales: Cash=₹${ctx.todaySales.cash} UPI=₹${ctx.todaySales.bank} Udhar=₹${ctx.todaySales.udhar} Total=₹${ctx.todaySales.total} Bills=${ctx.todaySales.count}
-Low Stock: ${ctx.lowStock.join(', ')||'None'}
-Payment modes: ${JSON.stringify(ctx.payModes)}
+Today Sales: Total=₹${ctx.todaySales.total} Bills=${ctx.todaySales.count}
 
-Respond ONLY in JSON. Understand Hindi and Hinglish.
+RULES:
+1. Understand Hindi and Hinglish voice/text commands.
+2. Only execute destructive actions (update, add, create, bill, purchase) when EXPLICITLY requested by the user. Do not guess.
+3. Determine the correct "action" and extract required "data".
 
 JSON format:
 {
   "reply": "Hindi/Hinglish message (use *bold*, emoji)",
-  "action": "create_bill|update_payment|balance_check|evening_summary|place_order|promo_message|none",
+  "action": "create_bill|add_purchase|create_customer|call_customer|ask_payment|balance_check|evening_summary|place_order|promo_message|update_settings|none",
   "data": {
     for create_bill: {"customer_name":"","customer_phone":"","items":[{"product_search":"","qty":1}],"payment_mode":"cash|bank|udhar|ask"},
+    for add_purchase: {"items":[{"name":"","qty":1}],"payment_mode":"cash|bank"},
+    for create_customer: {"customer_name":"","customer_phone":""},
+    for call_customer/ask_payment: {"customer_name":""},
     for balance_check: {"customer_name":""},
-    for place_order: {"supplier_search":"","items":[{"name":"","qty":0,"unit":""}]},
-    for promo_message: {"message":"complete WhatsApp promo message in Hindi"},
-    for evening_summary: {},
+    for update_settings: {"update_type":"name|other", "value":""},
     otherwise: {}
   }
 }
@@ -169,7 +252,7 @@ Return ONLY raw JSON, no markdown.`
     setLoading(false)
   }
 
-  const quickCmds = ['Aaj ki summary batao', 'Sugar ka stock batao', 'Harish ka balance batao', 'Low stock list dikhao']
+  const quickCmds = ['Aaj ki summary batao', 'Rahul ko call lagao', '2kg sugar purchase chadao', 'Ramesh ka bill banao']
 
   return (
     <div style={{ display:'grid', gridTemplateColumns:'1fr 300px', gap:20, height:'calc(100vh - 110px)' }}>
@@ -179,8 +262,8 @@ Return ONLY raw JSON, no markdown.`
         <div style={{ background:'#075E54', padding:'12px 18px', display:'flex', alignItems:'center', gap:12 }}>
           <div style={{ width:40, height:40, borderRadius:'50%', background:'#25d366', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>🤖</div>
           <div>
-            <div style={{ fontFamily:"'Baloo 2',cursive", fontWeight:800, fontSize:15, color:'#fff' }}>{shop.name} AI Bot</div>
-            <div style={{ fontSize:11, color:'rgba(255,255,255,0.75)' }}>● Online — Claude AI Powered</div>
+            <div style={{ fontFamily:"'Baloo 2',cursive", fontWeight:800, fontSize:15, color:'#fff' }}>{shop.name} AI Voice Bot</div>
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.75)' }}>● Online — Bol kar command dein!</div>
           </div>
         </div>
 
@@ -193,6 +276,14 @@ Return ONLY raw JSON, no markdown.`
                   <div style={{ background:'#f0f0f0', borderRadius:10, padding:'10px 12px', marginBottom:8, borderLeft:'4px solid #25d366' }}>
                     <div style={{ fontSize:10, color:'#25d366', fontWeight:800, marginBottom:6 }}>📱 WhatsApp Message{m.meta.phone?` → ${m.meta.phone}`:''}</div>
                     <pre style={{ fontSize:11, color:'#333', margin:0, whiteSpace:'pre-wrap', fontFamily:"'DM Sans',sans-serif" }}>{m.meta.waText}</pre>
+                    <a href={`https://wa.me/91${m.meta.phone}?text=${encodeURIComponent(m.meta.waText)}`} target="_blank" rel="noreferrer" style={{ display:'inline-block', marginTop:8, background:'#25d366', color:'#fff', padding:'6px 12px', borderRadius:6, textDecoration:'none', fontSize:11, fontWeight:'bold' }}>Bhejo</a>
+                  </div>
+                )}
+                {m.meta?.tag==='call' && (
+                  <div style={{ background:'#f0f0f0', borderRadius:10, padding:'10px 12px', marginBottom:8, borderLeft:`4px solid ${C.b}` }}>
+                    <div style={{ fontSize:10, color:C.b, fontWeight:800, marginBottom:6 }}>📞 Call {m.meta.name}</div>
+                    <div style={{ fontSize:13, fontWeight:'bold' }}>{m.meta.phone}</div>
+                    <a href={`tel:${m.meta.phone}`} style={{ display:'inline-block', marginTop:8, background:C.b, color:'#fff', padding:'6px 12px', borderRadius:6, textDecoration:'none', fontSize:11, fontWeight:'bold' }}>Call Lagayein</a>
                   </div>
                 )}
                 {m.meta?.tag==='promo' && m.meta.customers?.length>0 && (
@@ -231,10 +322,17 @@ Return ONLY raw JSON, no markdown.`
 
         {/* Input */}
         <div style={{ background:'#f0f0f0', padding:'10px 12px', display:'flex', gap:10, alignItems:'center' }}>
+          <button 
+            onClick={toggleListen}
+            style={{ width:42, height:42, borderRadius:'50%', background:isListening?'#ef4444':'#fff', border:isListening?'none':`1.5px solid ${C.border}`, cursor:'pointer', fontSize:18, color:isListening?'#fff':C.text, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 5px rgba(0,0,0,0.1)', transition:'0.3s' }}>
+            {isListening ? '🎙️' : '🎤'}
+          </button>
+          
           <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&!e.shiftKey&&sendMessage()}
-            placeholder="Kuch bhi likhein... (Hindi ya English)"
+            placeholder={isListening ? 'Sun raha hoon...' : 'Kuch bhi bolkar ya likh kar commands dein...'}
             style={{ flex:1, border:'none', borderRadius:24, padding:'10px 16px', fontSize:14, outline:'none', fontFamily:"'DM Sans',sans-serif", background:'#fff' }}/>
-          <button onClick={sendMessage} disabled={loading} style={{ width:42, height:42, borderRadius:'50%', background:loading?C.muted:'#25d366', border:'none', cursor:loading?'not-allowed':'pointer', fontSize:18, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            
+          <button onClick={sendMessage} disabled={loading||!input.trim()} style={{ width:42, height:42, borderRadius:'50%', background:loading||!input.trim()?C.muted:'#25d366', border:'none', cursor:loading||!input.trim()?'not-allowed':'pointer', fontSize:18, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center' }}>
             {loading ? '⏳' : '➤'}
           </button>
         </div>
@@ -243,15 +341,14 @@ Return ONLY raw JSON, no markdown.`
       {/* Commands Guide */}
       <div style={{ display:'flex', flexDirection:'column', gap:12, overflowY:'auto' }}>
         <div style={{ background:C.card, borderRadius:16, padding:18, boxShadow:'0 2px 12px rgba(0,0,0,0.06)' }}>
-          <div style={{ fontFamily:"'Baloo 2',cursive", fontWeight:900, fontSize:15, color:C.gD, marginBottom:12 }}>🤖 AI Bot Commands</div>
+          <div style={{ fontFamily:"'Baloo 2',cursive", fontWeight:900, fontSize:15, color:C.gD, marginBottom:12 }}>🤖 Voice Commands Guide</div>
           {[
-            ['🧾 Bill Banana', '"Harish ko 2kg sugar ka bill bana ke bhej do"'],
-            ['💳 Payment', '"Harish ne 500 cash diya"'],
-            ['📒 Balance', '"Sunita ka balance batao"'],
-            ['📊 Summary', '"Aaj ki kamai ki summary batao"'],
-            ['📦 Order', '"Sharma ji ko atta oil ka order do"'],
-            ['📣 Promo', '"Kal Holi sale hai — accha message banao sabko bhejo"'],
-            ['🔍 Stock', '"Sugar ka stock kitna hai"'],
+            ['🧾 Bill Banana', '"Harish ko 2kg sugar ka bill bana do, cash mein"'],
+            ['📦 Purchase Chadana', '"Aaj 10kg atta purchase kiya, stock update kar do"'],
+            ['💳 Customer Add', '"Rahul naya customer add karo, phone 987654321"'],
+            ['📞 Call / Payment', '"Sunita ko call lagao" ya "Sunita se udhar maango"'],
+            ['⚙️ Settings', '"Dukaan ka naam badal kar Super Store kar do"'],
+            ['📊 Summary', '"Aaj ki kamai batao"'],
           ].map(([t,ex])=>(
             <div key={t} style={{ marginBottom:10, paddingBottom:10, borderBottom:`1px solid ${C.gXL}` }}>
               <div style={{ fontWeight:800, fontSize:12, color:C.g }}>{t}</div>
@@ -260,8 +357,11 @@ Return ONLY raw JSON, no markdown.`
           ))}
         </div>
         <div style={{ background:'#fffbeb', border:'1px solid #fde68a', borderRadius:14, padding:16 }}>
-          <div style={{ fontWeight:800, fontSize:13, color:C.gold, marginBottom:8 }}>⚠️ Note</div>
+          <div style={{ fontWeight:800, fontSize:13, color:C.gold, marginBottom:8 }}>⚠️ Dhyan Dein</div>
           <div style={{ fontSize:12, color:'#92400e', lineHeight:1.6 }}>
+            Bot sirf tabhi action lega jab aap explicitly "banao", "add karo", "update karo" bolenge. Mic icon pe click karein aur bolna shuru karein!
+          </div>
+          <div style={{ fontSize:12, color:'#92400e', lineHeight:1.6, marginTop:8 }}>
             AI bot ke liye VITE_ANTHROPIC_KEY .env mein set karni hai. claude.ai se key le sakte hain.
           </div>
         </div>
