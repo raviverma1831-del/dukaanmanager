@@ -785,7 +785,7 @@ export default function B2BNetwork({ shop }) {
               </div>
             </div>
           ) : myListing ? (
-            <div>
+            <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
               <WholesalerCard item={myListing} shop={shop}
                 priceCount={priceCounts[myListing.id]||0}
                 avgRating={ratings[myListing.id]?.avg||0}
@@ -793,9 +793,22 @@ export default function B2BNetwork({ shop }) {
                 onViewPrices={l=>{setSelectedListing(l);setShowPriceModal(true)}}
                 onConnect={()=>{}} onReview={()=>{}}
               />
-              <button onClick={()=>{setForm({business_name:myListing.business_name,owner_name:myListing.owner_name||'',phone:myListing.phone||'',city:myListing.city||'',categories:myListing.categories||'',description:myListing.description||'',min_order:myListing.min_order||'',delivery:myListing.delivery||false,delivery_area:myListing.delivery_area||'',business_type:myListing.business_type,rate_type:myListing.rate_type});setShowForm(true)}} style={{ marginTop:12, background:C.goldL, color:C.gold, border:'none', borderRadius:12, padding:'10px 24px', fontWeight:800, fontSize:14, cursor:'pointer', fontFamily:"'Baloo 2',cursive" }}>
-                ✏️ Edit Listing
-              </button>
+              <div style={{ display:'flex', gap:8 }}>
+                <button onClick={()=>{setForm({business_name:myListing.business_name,owner_name:myListing.owner_name||'',phone:myListing.phone||'',city:myListing.city||'',categories:myListing.categories||'',description:myListing.description||'',min_order:myListing.min_order||'',delivery:myListing.delivery||false,delivery_area:myListing.delivery_area||'',business_type:myListing.business_type,rate_type:myListing.rate_type});setShowForm(true)}} style={{ background:'#fffbeb', color:'#92400e', border:'1px solid #fde68a', borderRadius:12, padding:'10px 18px', fontWeight:800, fontSize:13, cursor:'pointer', fontFamily:"'Baloo 2',cursive" }}>
+                  ✏️ Listing Edit
+                </button>
+                <button onClick={()=>{setSelectedListing(myListing);setShowPriceModal(true)}} style={{ flex:1, background:`linear-gradient(135deg,#14532d,#16a34a)`, color:'#fff', border:'none', borderRadius:12, padding:'10px 18px', fontWeight:900, fontSize:14, cursor:'pointer', fontFamily:"'Baloo 2',cursive" }}>
+                  🏷️ Price List Manage Karo ({priceCounts[myListing.id]||0} items)
+                </button>
+              </div>
+              {/* Quick tip if no prices */}
+              {(priceCounts[myListing.id]||0) === 0 && (
+                <div style={{ background:'#eff6ff', border:'1px solid #bfdbfe', borderRadius:12, padding:'14px 18px', fontSize:13, color:'#1d4ed8' }}>
+                  💡 <b>Price List abhi khali hai!</b><br/>
+                  "🏷️ Price List Manage Karo" button dabao → "+ Item Add Karo" se apne products aur unke prices add karo.<br/>
+                  <span style={{fontSize:11,color:'#6b7280',marginTop:4,display:'block'}}>Jaise: Sugar 1kg → ₹45, Atta 10kg → ₹350 — har item ka alag price set kar sakte ho.</span>
+                </div>
+              )}
             </div>
           ) : (
             <div style={{ background:'#fff', borderRadius:16, padding:50, textAlign:'center', boxShadow:'0 2px 12px rgba(0,0,0,0.06)' }}>

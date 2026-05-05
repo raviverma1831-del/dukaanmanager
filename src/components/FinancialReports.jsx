@@ -4,7 +4,7 @@ import { C } from '../lib/constants.js'
 
 export default function FinancialReports({ shop }) {
   const [reportType, setReportType] = useState('pl')
-  const [period, setPeriod] = useState('month')
+  const [period, setPeriod] = useState('fy')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const printRef = useRef(null)
@@ -18,69 +18,91 @@ export default function FinancialReports({ shop }) {
     if (period === 'week') { const d = new Date(); d.setDate(d.getDate()-7); return [d.toISOString().slice(0,10), t] }
     if (period === 'month') { const d = new Date(); d.setDate(1); return [d.toISOString().slice(0,10), t] }
     if (period === 'year') { const d = new Date(); d.setMonth(0,1); return [d.toISOString().slice(0,10), t] }
+    if (period === 'fy') {
+      const m = today.getMonth() // 0=Jan, 3=Apr
+      const y = m >= 3 ? today.getFullYear() : today.getFullYear() - 1
+      return [`${y}-04-01`, `${y+1}-03-31`]
+    }
     return [t, t]
   }
 
   const loadData = async () => {
     setLoading(true)
-    const [from, to] = getRange()
+    try {
+      const [from, to] = getRange()
 
-    const [
-      { data: sales },
-      { data: purchases },
-      { data: expenses },
-      { data: customers },
-      { data: products },
-    ] = await Promise.all([
-      supabase.from('invoices').select('total,pay_mode,subtotal,total_gst,bill_date').eq('shop_id', shop.id).gte('bill_date', from).lte('bill_date', to),
-      supabase.from('purchases').select('total,purchase_date').eq('shop_id', shop.id).gte('purchase_date', from).lte('purchase_date', to),
-      supabase.from('expenses').select('amount,category,payment_mode,expense_date').eq('shop_id', shop.id).gte('expense_date', from).lte('expense_date', to),
-      supabase.from('customers').select('balance,type').eq('shop_id', shop.id),
-      supabase.from('products').select('name,retail_price,stock,is_service').eq('shop_id', shop.id),
-    ])
+      const [{ data: sales }, { data: purchases }, { data: expData }, { data: customers }, { data: products }] = await Promise.all([
+        supabase.from('invoices').select('total,pay_mode,subtotal,total_gst,bill_date').eq('shop_id', shop.id).gte('bill_date', from).lte('bill_date', to),
+        supabase.from('purchases').select('total,purchase_date').eq('shop_id', shop.id).gte('purchase_date', from).lte('purchase_date', to),
+        supabase.from('expenses').select('amount,category').eq('shop_id', shop.id).gte('created_at', from).lte('created_at', to+'T23:59:59'),
+        supabase.from('customers').select('balance,type').eq('shop_id', shop.id),
+        supabase.from('products').select('retail_price,stock,is_service').eq('shop_id', shop.id),
+      ])
 
-    // Sales
-    const totalSales     = sales?.reduce((s,i)=>s+i.total,0)||0
-    const taxableSales   = sales?.reduce((s,i)=>s+(i.subtotal||i.total),0)||0
-    const totalGstColl   = sales?.reduce((s,i)=>s+(i.total_gst||0),0)||0
-    const cashSales      = sales?.filter(s=>s.pay_mode==='cash').reduce((s,i)=>s+i.total,0)||0
-    const digitalSales   = sales?.filter(s=>['upi','bank'].includes(s.pay_mode)).reduce((s,i)=>s+i.total,0)||0
-    const udharSales     = sales?.filter(s=>s.pay_mode==='udhar').reduce((s,i)=>s+i.total,0)||0
+      // Load ERP tables (may not exist yet)
+      const { data: assets } = await supabase.from('fixed_assets').select('current_value,purchase_value,asset_name').eq('shop_id', shop.id).catch(()=>({data:[]}))
+      const { data: capitalRows } = await supabase.from('capital_accounts').select('amount,account_type').eq('shop_id', shop.id).catch(()=>({data:[]}))
+      const { data: activeFY } = await supabase.from('financial_years').select('*').eq('shop_id', shop.id).eq('is_active', true).single().catch(()=>({data:null}))
+      const { data: suppliers } = await supabase.from('suppliers').select('balance').eq('shop_id', shop.id).catch(()=>({data:[]}))
 
-    // Purchases & Expenses
-    const totalPurchases = purchases?.reduce((s,i)=>s+i.total,0)||0
-    const totalExpenses  = expenses?.reduce((s,i)=>s+i.amount,0)||0
-    const expByCat       = expenses?.reduce((acc,e)=>{acc[e.category]=(acc[e.category]||0)+e.amount;return acc},{})
+      const expenses = expData || []
+      const totalSales     = (sales||[]).reduce((s,i)=>s+(i.total||0),0)
+      const totalGstColl   = (sales||[]).reduce((s,i)=>s+(i.total_gst||0),0)
+      const cashSales      = (sales||[]).filter(s=>s.pay_mode==='cash').reduce((s,i)=>s+(i.total||0),0)
+      const digitalSales   = (sales||[]).filter(s=>['upi','bank'].includes(s.pay_mode)).reduce((s,i)=>s+(i.total||0),0)
+      const udharSales     = (sales||[]).filter(s=>s.pay_mode==='udhar').reduce((s,i)=>s+(i.total||0),0)
+      const totalPurchases = (purchases||[]).reduce((s,i)=>s+(i.total||0),0)
+      const totalExpenses  = expenses.reduce((s,i)=>s+(i.amount||0),0)
+      const expByCat       = expenses.reduce((acc,e)=>{acc[e.category]=(acc[e.category]||0)+(e.amount||0);return acc},{})
+      const grossProfit    = totalSales - totalPurchases
+      const grossMargin    = totalSales > 0 ? (grossProfit/totalSales*100) : 0
+      const netProfit      = grossProfit - totalExpenses
+      const netMargin      = totalSales > 0 ? (netProfit/totalSales*100) : 0
 
-    // Profitability
-    const grossProfit    = totalSales - totalPurchases
-    const grossMargin    = totalSales > 0 ? (grossProfit/totalSales*100) : 0
-    const netProfit      = grossProfit - totalExpenses
-    const netMargin      = totalSales > 0 ? (netProfit/totalSales*100) : 0
+      // Balance Sheet — Real Data
+      const totalUdhar       = (customers||[]).reduce((s,c)=>s+(c.balance||0),0)
+      const inventoryValue   = (products||[]).filter(p=>!p.is_service).reduce((s,p)=>s+((p.stock||0)*(p.retail_price||0)),0)
+      const fixedAssetsTotal = (assets||[]).reduce((s,a)=>s+(a.current_value||a.purchase_value||0),0)
+      const openingCash      = activeFY?.opening_cash || 0
+      const openingBank      = activeFY?.opening_bank || 0
+      // Capital breakdown
+      const ownerCapital     = (capitalRows||[]).filter(r=>r.account_type==='capital').reduce((s,r)=>s+(r.amount||0),0)
+      const securedLoans     = (capitalRows||[]).filter(r=>r.account_type==='secured_loan').reduce((s,r)=>s+(r.amount||0),0)
+      const unsecuredLoans   = (capitalRows||[]).filter(r=>r.account_type==='unsecured_loan').reduce((s,r)=>s+(r.amount||0),0)
+      const creditorDues     = (suppliers||[]).reduce((s,sup)=>s+(sup.balance||0),0)
 
-    // Balance Sheet items
-    const totalUdhar     = customers?.reduce((s,c)=>s+(c.balance||0),0)||0
-    const inventoryValue = products?.filter(p=>!p.is_service).reduce((s,p)=>s+(p.stock*p.retail_price),0)||0
+      // Cash in hand estimate = opening + cash sales + digital - purchases - expenses
+      const estimatedCash = openingCash + cashSales - totalPurchases * 0.5
 
-    // Trial Balance
-    const trialBalance = [
-      { account:'Sales Revenue', debit:0, credit:totalSales, type:'income' },
-      { account:'Cost of Goods (Purchases)', debit:totalPurchases, credit:0, type:'expense' },
-      { account:'Operating Expenses', debit:totalExpenses, credit:0, type:'expense' },
-      { account:'Cash Received', debit:cashSales+digitalSales, credit:0, type:'asset' },
-      { account:'Debtors (Udhar)', debit:totalUdhar, credit:0, type:'asset' },
-      { account:'GST Collected', debit:0, credit:totalGstColl, type:'liability' },
-      { account:'Inventory', debit:inventoryValue, credit:0, type:'asset' },
-    ]
-    const totalDebit  = trialBalance.reduce((s,t)=>s+t.debit,0)
-    const totalCredit = trialBalance.reduce((s,t)=>s+t.credit,0)
+      const trialBalance = [
+        { account:'Sales Revenue',         debit:0,              credit:totalSales,    type:'income' },
+        { account:'Cost of Goods',         debit:totalPurchases, credit:0,             type:'expense' },
+        { account:'Operating Expenses',    debit:totalExpenses,  credit:0,             type:'expense' },
+        { account:'Cash & Bank Received',  debit:cashSales+digitalSales, credit:0,    type:'asset' },
+        { account:'Debtors (Udhar)',       debit:totalUdhar,     credit:0,             type:'asset' },
+        { account:'GST Collected',         debit:0,              credit:totalGstColl,  type:'liability' },
+        { account:'Inventory',             debit:inventoryValue, credit:0,             type:'asset' },
+        { account:'Fixed Assets',          debit:fixedAssetsTotal, credit:0,          type:'asset' },
+        { account:'Owner Capital',         debit:0,              credit:ownerCapital,  type:'equity' },
+        { account:'Loans (Secured)',        debit:0,              credit:securedLoans,  type:'liability' },
+      ]
+      const totalDebit  = trialBalance.reduce((s,t)=>s+t.debit,0)
+      const totalCredit = trialBalance.reduce((s,t)=>s+t.credit,0)
 
-    setData({
-      from, to, totalSales, taxableSales, totalGstColl, cashSales, digitalSales, udharSales,
-      totalPurchases, totalExpenses, expByCat, grossProfit, grossMargin, netProfit, netMargin,
-      totalUdhar, inventoryValue, trialBalance, totalDebit, totalCredit,
-      billCount: sales?.length||0, purchaseCount: purchases?.length||0, expCount: expenses?.length||0,
-    })
+      setData({
+        from, to,
+        totalSales, totalGstColl, cashSales, digitalSales, udharSales,
+        totalPurchases, totalExpenses, expByCat,
+        grossProfit, grossMargin, netProfit, netMargin,
+        totalUdhar, inventoryValue, fixedAssetsTotal,
+        openingCash, openingBank, estimatedCash,
+        ownerCapital, securedLoans, unsecuredLoans, creditorDues,
+        trialBalance, totalDebit, totalCredit,
+        fyLabel: activeFY?.fy_label || '',
+        assets: assets || [],
+        billCount: (sales||[]).length, purchaseCount: (purchases||[]).length, expCount: expenses.length,
+      })
+    } catch(e) { console.error(e) }
     setLoading(false)
   }
 
@@ -111,8 +133,8 @@ export default function FinancialReports({ shop }) {
           <div style={{ fontSize:12, color:C.muted }}>Period: {data.from} to {data.to}</div>
         </div>
         <div style={{ display:'flex', gap:8 }}>
-          <div style={{ display:'flex', gap:6 }}>
-            {[['today','Aaj'],['week','Week'],['month','Mahina'],['year','Saal']].map(([v,l])=>(
+          <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+            {[['fy','📅 FY (Apr-Mar)'],['today','Aaj'],['week','Week'],['month','Mahina'],['year','Cal Year']].map(([v,l])=>(
               <button key={v} onClick={()=>setPeriod(v)} style={{ background:period===v?C.g:'#fff', color:period===v?'#fff':C.text, border:`1.5px solid ${period===v?C.g:C.border}`, borderRadius:20, padding:'5px 12px', fontSize:11, fontWeight:700, cursor:'pointer' }}>{l}</button>
             ))}
           </div>
@@ -235,28 +257,33 @@ export default function FinancialReports({ shop }) {
             {/* ASSETS */}
             <div style={{ background:'#fff', borderRadius:16, overflow:'hidden', boxShadow:'0 2px 12px rgba(0,0,0,0.06)' }}>
               <div style={{ padding:'14px 18px', background:'#f0f9ff', fontFamily:"'Baloo 2',cursive", fontWeight:800, color:'#0369a1', fontSize:15 }}>
-                📦 ASSETS
+                📦 ASSETS {data.fyLabel && <span style={{fontSize:12,fontWeight:600}}>— FY {data.fyLabel}</span>}
               </div>
               {[
                 { label:'Current Assets', isHeader:true },
-                { label:'Cash in Hand (Estimated)', val: data.cashSales },
-                { label:'Bank/UPI Received', val: data.digitalSales },
-                { label:'Debtors (Udhar Baaki)', val: data.totalUdhar },
-                { label:'Inventory (Stock Value)', val: data.inventoryValue },
+                { label:'Opening Cash (FY Start)', val: data.openingCash },
+                { label:'Opening Bank (FY Start)', val: data.openingBank },
+                { label:'Cash Sales (This Period)', val: data.cashSales },
+                { label:'Digital / UPI Received',  val: data.digitalSales },
+                { label:'Debtors (Udhar Baaki)',    val: data.totalUdhar },
+                { label:'Inventory (Stock Value)',  val: data.inventoryValue },
                 { label:'Fixed Assets', isHeader:true },
-                { label:'Equipment / Furniture', val: 0, note:'Manual entry required' },
+                ...( data.assets.length > 0
+                  ? data.assets.map(a => ({ label: a.asset_name, val: a.current_value || a.purchase_value || 0 }))
+                  : [{ label:'No fixed assets added yet', val:0, muted:true }]
+                ),
               ].map((item,i)=>(
                 item.isHeader
                   ? <div key={i} style={{ padding:'8px 18px 4px', fontWeight:800, fontSize:12, color:'#0369a1', background:'#f8fbff' }}>{item.label}</div>
                   : <div key={i} style={{ display:'flex', justifyContent:'space-between', padding:'8px 18px', borderBottom:`1px solid #f0f9ff`, fontSize:13 }}>
-                      <span style={{ color:C.text }}>{item.label}{item.note && <span style={{ fontSize:10, color:C.muted }}> ({item.note})</span>}</span>
-                      <span style={{ fontFamily:"'Baloo 2',cursive", fontWeight:700, color:'#0369a1' }}>₹{(item.val||0).toFixed(0)}</span>
+                      <span style={{ color: item.muted ? C.muted : C.text }}>{item.label}</span>
+                      <span style={{ fontFamily:"'Baloo 2',cursive", fontWeight:700, color: item.muted ? C.muted : '#0369a1' }}>₹{(item.val||0).toFixed(0)}</span>
                     </div>
               ))}
               <div style={{ padding:'12px 18px', background:'#f0f9ff', display:'flex', justifyContent:'space-between' }}>
                 <span style={{ fontWeight:900, fontSize:15 }}>TOTAL ASSETS</span>
                 <span style={{ fontFamily:"'Baloo 2',cursive", fontWeight:900, fontSize:20, color:'#0369a1' }}>
-                  ₹{(data.cashSales+data.digitalSales+data.totalUdhar+data.inventoryValue).toFixed(0)}
+                  ₹{(data.openingCash + data.openingBank + data.cashSales + data.digitalSales + data.totalUdhar + data.inventoryValue + data.fixedAssetsTotal).toFixed(0)}
                 </span>
               </div>
             </div>
@@ -269,30 +296,41 @@ export default function FinancialReports({ shop }) {
               {[
                 { label:'Current Liabilities', isHeader:true },
                 { label:'GST Payable (Collected)', val: data.totalGstColl },
-                { label:'Creditors (Supplier Dues)', val: 0, note:'Manual entry required' },
-                { label:'Owner\'s Equity', isHeader:true },
-                { label:'Capital Invested', val: 0, note:'Manual entry required' },
-                { label:'Retained Earnings', val: data.netProfit },
-                { label:'Net Profit This Period', val: data.netProfit },
+                { label:'Creditors (Supplier Dues)', val: data.creditorDues },
+                { label:'Long-term Liabilities', isHeader:true },
+                { label:'Secured Loans',   val: data.securedLoans },
+                { label:'Unsecured Loans', val: data.unsecuredLoans },
+                { label:"Owner's Equity", isHeader:true },
+                { label:'Capital Invested', val: data.ownerCapital },
+                { label:'Net Profit (This Period)', val: data.netProfit },
               ].map((item,i)=>(
                 item.isHeader
                   ? <div key={i} style={{ padding:'8px 18px 4px', fontWeight:800, fontSize:12, color:'#7c3aed', background:'#fdf4ff' }}>{item.label}</div>
                   : <div key={i} style={{ display:'flex', justifyContent:'space-between', padding:'8px 18px', borderBottom:`1px solid #fdf4ff`, fontSize:13 }}>
-                      <span style={{ color:C.text }}>{item.label}{item.note && <span style={{ fontSize:10, color:C.muted }}> ({item.note})</span>}</span>
-                      <span style={{ fontFamily:"'Baloo 2',cursive", fontWeight:700, color:'#7c3aed' }}>{item.val<0?'-':''}₹{Math.abs(item.val||0).toFixed(0)}</span>
+                      <span style={{ color:C.text }}>{item.label}</span>
+                      <span style={{ fontFamily:"'Baloo 2',cursive", fontWeight:700, color: item.val < 0 ? '#dc2626' : '#7c3aed' }}>
+                        {item.val < 0 ? '-' : ''}₹{Math.abs(item.val||0).toFixed(0)}
+                      </span>
                     </div>
               ))}
               <div style={{ padding:'12px 18px', background:'#fdf4ff', display:'flex', justifyContent:'space-between' }}>
                 <span style={{ fontWeight:900, fontSize:15 }}>TOTAL L + E</span>
                 <span style={{ fontFamily:"'Baloo 2',cursive", fontWeight:900, fontSize:20, color:'#7c3aed' }}>
-                  ₹{(data.totalGstColl+data.netProfit).toFixed(0)}
+                  ₹{(data.totalGstColl + data.creditorDues + data.securedLoans + data.unsecuredLoans + data.ownerCapital + data.netProfit).toFixed(0)}
                 </span>
               </div>
             </div>
 
-            <div style={{ gridColumn:'1/-1', background:'#fffbeb', border:`1px solid #fde68a`, borderRadius:12, padding:'12px 16px', fontSize:12, color:'#92400e' }}>
-              ⚠️ <b>Note:</b> Balance sheet poori accuracy ke liye opening balances, fixed assets, aur creditor dues manually enter karni hogi. Ye sirf is period ka transactions dikha raha hai.
-            </div>
+            {data.fixedAssetsTotal > 0 && (
+              <div style={{ gridColumn:'1/-1', background:'#f0fdf4', borderRadius:12, padding:'12px 18px', fontSize:12, color:C.gD }}>
+                📦 <b>Fixed Assets Total: ₹{data.fixedAssetsTotal.toFixed(0)}</b> — {data.assets.length} assets tracked
+              </div>
+            )}
+            {data.ownerCapital === 0 && data.securedLoans === 0 && (
+              <div style={{ gridColumn:'1/-1', background:'#fffbeb', border:`1px solid #fde68a`, borderRadius:12, padding:'12px 16px', fontSize:12, color:'#92400e' }}>
+                💡 <b>Tip:</b> Capital tab mein apna invested capital, secured loan aur unsecured loan add karo — tab Balance Sheet bilkul accurate rahegi.
+              </div>
+            )}
           </div>
         )}
 
