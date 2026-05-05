@@ -14,7 +14,8 @@ const TABS = [
   { id: 'reports',     emoji: '📊', label: 'Reports',      group: 'reports' },
   { id: 'marketing',   emoji: '🎨', label: 'Marketing',    group: 'extra' },
   { id: 'b2b',         emoji: '🤝', label: 'B2B',          group: 'extra' },
-  { id: 'udhar',       emoji: '📞', label: 'Recovery',     group: 'extra' },
+  { id: 'udhar',       emoji: '📊', label: 'Aging',        group: 'extra' },
+  { id: 'ledgers',     emoji: '📒', label: 'Ledgers',      group: 'extra' },
   { id: 'plans',       emoji: '💎', label: 'Plans',        group: 'extra' },
   { id: 'settings',    emoji: '⚙️', label: 'Settings',    group: 'extra' },
 ]

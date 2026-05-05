@@ -12,7 +12,8 @@ import Suppliers from './components/Suppliers.jsx'
 import AIChat from './components/AIChat.jsx'
 import AIMarketing from './components/AIMarketing.jsx'
 import B2BNetwork from './components/B2BNetwork.jsx'
-import AIUdharCalls from './components/AIUdharCalls.jsx'
+import AgingRecovery from './components/AgingRecovery.jsx'
+import Ledgers from './components/Ledgers.jsx'
 import Reports from './components/Reports.jsx'
 import Settings from './components/Settings.jsx'
 import PremiumPlans from './components/PremiumPlans.jsx'
@@ -75,7 +76,8 @@ export default function App() {
     capital:    <CapitalAccounts shop={shop} />,
     marketing:  <AIMarketing shop={shop} />,
     b2b:        <B2BNetwork shop={shop} />,
-    udhar:      <AIUdharCalls shop={shop} />,
+    udhar:      <AgingRecovery shop={shop} />,
+    ledgers:    <Ledgers shop={shop} />,
     reports:    <Reports shop={shop} />,
     plans:      <PremiumPlans currentPlan="free" />,
     settings:   <Settings shop={shop} onUpdate={(s) => setShop(s)} onSignOut={handleSignOut} />,
