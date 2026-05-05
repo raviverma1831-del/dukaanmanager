@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { C, BIZ_TYPES } from '../lib/constants.js'
-import { PayPalSettings } from './PayPalPayment.jsx'
 
 export default function Settings({ shop, onUpdate, onSignOut }) {
   const [form, setForm] = useState({
@@ -184,7 +183,6 @@ export default function Settings({ shop, onUpdate, onSignOut }) {
         <Section id="payment" emoji="💳" label="Payment & Customers" />
         <Section id="fy"      emoji="📅" label="Financial Year" />
         <Section id="backup"  emoji="💾" label="Backup & Export" />
-        <Section id="paypal"  emoji="🅿️" label="PayPal" />
         <Section id="danger"  emoji="⚠️" label="Danger Zone" />
       </div>
 
@@ -264,11 +262,27 @@ export default function Settings({ shop, onUpdate, onSignOut }) {
         {activeSection === 'payment' && (
           <div style={{ display: 'grid', gap: 16 }}>
             <div style={{ fontFamily: "'Baloo 2',cursive", fontWeight: 800, color: C.g }}>💳 Payment Modes</div>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
               {[['cash', '💵 Cash'], ['upi', '📱 UPI/QR'], ['bank', '🏦 Bank Transfer']].map(([k, l]) => (
                 <button key={k} onClick={() => setForm(f => ({ ...f, pay_modes: { ...f.pay_modes, [k]: !f.pay_modes[k] } }))} style={{ background: form.pay_modes[k] ? C.g : '#fff', color: form.pay_modes[k] ? '#fff' : C.text, border: `1.5px solid ${form.pay_modes[k] ? C.g : C.border}`, borderRadius: 20, padding: '8px 18px', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>{l}</button>
               ))}
             </div>
+
+            {form.pay_modes.upi && (
+               <div>
+                  <label style={{ fontWeight: 700, fontSize: 12, color: C.text, display: 'block', marginBottom: 5 }}>Aapki UPI ID (WhatsApp link ke liye)</label>
+                  <input value={form.pay_modes.upi_id || ''} onChange={e => setForm(f => ({ ...f, pay_modes: { ...f.pay_modes, upi_id: e.target.value } }))} placeholder="yourname@upi" style={inp} />
+               </div>
+            )}
+
+            {form.pay_modes.bank && (
+               <div style={{display:'grid', gap:10, background:'#f8fafc', padding:16, borderRadius:12, border:`1px solid ${C.border}`}}>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: C.text }}>Bank Details (Invoice par print hongi)</div>
+                  <input value={form.pay_modes.bank_name || ''} onChange={e => setForm(f => ({ ...f, pay_modes: { ...f.pay_modes, bank_name: e.target.value } }))} placeholder="Bank Name (eg. SBI, HDFC)" style={inp} />
+                  <input value={form.pay_modes.bank_acc || ''} onChange={e => setForm(f => ({ ...f, pay_modes: { ...f.pay_modes, bank_acc: e.target.value } }))} placeholder="Account Number" style={inp} />
+                  <input value={form.pay_modes.bank_ifsc || ''} onChange={e => setForm(f => ({ ...f, pay_modes: { ...f.pay_modes, bank_ifsc: e.target.value.toUpperCase() } }))} placeholder="IFSC Code" style={inp} />
+               </div>
+            )}
             <div style={{ fontFamily: "'Baloo 2',cursive", fontWeight: 800, color: C.g }}>👥 Customer Types</div>
             <div style={{ display: 'flex', gap: 10 }}>
               {[['retail', '🛒 Retail'], ['wholesale', '📦 Wholesale']].map(([k, l]) => (

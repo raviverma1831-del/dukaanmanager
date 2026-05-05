@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { supabase } from '../lib/supabase.js'
 import { C } from '../lib/constants.js'
+import { PayPalCheckout } from './PayPalPayment.jsx'
 
 const PLANS = [
   {
@@ -57,13 +59,28 @@ const COMPARE = [
   ['Support', 'Community', 'Email', 'Priority', 'Dedicated'],
 ]
 
-export default function PremiumPlans({ currentPlan = 'free' }) {
+export default function PremiumPlans({ currentPlan = 'free', shop }) {
   const [billing, setBilling] = useState('monthly')
+  const [checkoutPlan, setCheckoutPlan] = useState(null)
+
+  const handleSuccess = async (details, planId) => {
+    // Update shop subscription status in Supabase
+    await supabase.from('shops').update({ subscription_status: planId }).eq('id', shop.id)
+    alert("Payment successful! Welcome to premium.")
+    window.location.reload()
+  }
 
   return (
     <div>
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
         <div style={{ fontFamily: "'Baloo 2',cursive", fontWeight: 900, fontSize: 28, color: C.gD }}>💎 DukaanManager Plans</div>
+        
+        {currentPlan === 'pro' && shop?.created_at && ((new Date().getTime() - new Date(shop.created_at).getTime()) / (1000 * 60 * 60 * 24)) <= 7 && !shop?.subscription_status && (
+            <div style={{ background: '#fef3c7', padding: '8px', borderRadius: '8px', color: '#b45309', fontWeight: 700, margin: '12px auto', maxWidth: '400px' }}>
+              🎉 Aapka 7-Day Full Access Trial active hai! Baad mein plan select karein.
+            </div>
+        )}
+
         <div style={{ color: C.muted, fontSize: 14, marginTop: 8 }}>Apni dukaan ke liye sahi plan chunein</div>
         <div style={{ display: 'inline-flex', background: '#f3f4f6', borderRadius: 20, padding: 4, marginTop: 16, gap: 4 }}>
           {[['monthly', 'Monthly'], ['yearly', '🎁 Yearly (2 mahine free!)']].map(([v, l]) => (
@@ -107,10 +124,23 @@ export default function PremiumPlans({ currentPlan = 'free' }) {
               </div>
 
               {!isCurrent && plan.price > 0 && (
-                <button onClick={() => alert(`₹${price}/month plan ke liye contact karein:\nWhatsApp: +91-XXXXXXXXXX\n\nRazorpay payment gateway jald aa raha hai!`)}
-                  style={{ width: '100%', background: plan.popular ? 'rgba(255,255,255,0.2)' : plan.color, color: '#fff', border: plan.popular ? '2px solid rgba(255,255,255,0.4)' : 'none', borderRadius: 12, padding: 11, fontFamily: "'Baloo 2',cursive", fontWeight: 900, fontSize: 14, cursor: 'pointer' }}>
-                  Upgrade to {plan.name} →
-                </button>
+                checkoutPlan === plan.id ? (
+                  <div style={{ marginTop: 10, background: '#fff', padding: 8, borderRadius: 12 }}>
+                    <PayPalCheckout 
+                      amount={(price / 80).toFixed(2)} // Approximate USD conversion for PayPal
+                      currency="USD" 
+                      description={`DukaanManager ${plan.name} Plan`} 
+                      shop={shop} 
+                      onSuccess={(details) => handleSuccess(details, plan.id)} 
+                    />
+                    <button onClick={() => setCheckoutPlan(null)} style={{ background: 'transparent', color: '#6b7280', border: 'none', cursor: 'pointer', fontSize: 12, width: '100%', marginTop: 8 }}>Cancel</button>
+                  </div>
+                ) : (
+                  <button onClick={() => setCheckoutPlan(plan.id)}
+                    style={{ width: '100%', background: plan.popular ? 'rgba(255,255,255,0.2)' : plan.color, color: '#fff', border: plan.popular ? '2px solid rgba(255,255,255,0.4)' : 'none', borderRadius: 12, padding: 11, fontFamily: "'Baloo 2',cursive", fontWeight: 900, fontSize: 14, cursor: 'pointer' }}>
+                    Pay ₹{price} & Upgrade →
+                  </button>
+                )
               )}
               {isCurrent && (
                 <div style={{ textAlign: 'center', padding: 10, background: 'rgba(255,255,255,0.1)', borderRadius: 10, fontWeight: 700, fontSize: 13, color: plan.popular ? '#fff' : plan.color }}>

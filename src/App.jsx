@@ -61,7 +61,17 @@ export default function App() {
   )
 
   if (!session) return <Login />
-  if (!shop) return <Onboarding userId={session.user.id} onComplete={(s) => setShop(s)} />
+  if (!shop) return <Onboarding userId={session.user.id} onComplete={(s) => { setShop(s); setTab('plans') }} />
+
+  // Plan Calculation logic (7 days free trial full access, then free version if unpaid)
+  let currentPlan = 'free';
+  if (shop?.subscription_status) {
+    currentPlan = shop.subscription_status;
+  } else if (shop?.created_at) {
+    const created = new Date(shop.created_at).getTime();
+    const daysDiff = (new Date().getTime() - created) / (1000 * 60 * 60 * 24);
+    if (daysDiff <= 7) currentPlan = 'pro'; // Trial Period full access
+  }
 
   const TABS = {
     dashboard:  <Dashboard shop={shop} />,
@@ -79,7 +89,7 @@ export default function App() {
     udhar:      <AgingRecovery shop={shop} />,
     ledgers:    <Ledgers shop={shop} />,
     reports:    <Reports shop={shop} />,
-    plans:      <PremiumPlans currentPlan="free" />,
+    plans:      <PremiumPlans currentPlan={currentPlan} shop={shop} />,
     settings:   <Settings shop={shop} onUpdate={(s) => setShop(s)} onSignOut={handleSignOut} />,
   }
 
